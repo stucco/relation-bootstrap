@@ -1,3 +1,4 @@
+nvdcve-*.xml
 data*
 target/
 bin/
