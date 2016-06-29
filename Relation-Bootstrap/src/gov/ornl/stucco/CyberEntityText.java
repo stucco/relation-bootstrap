@@ -92,7 +92,7 @@ public class CyberEntityText
 	}
 	
 	
-	CyberEntityText(String entitytext, int entitytype)
+	public CyberEntityText(String entitytext, int entitytype)
 	{
 		this.entitytext = entitytext;
 		this.entitytype = entitytype;
@@ -103,6 +103,10 @@ public class CyberEntityText
 		return entitytype;
 	}
 	
+	public String getEntityText()
+	{
+		return entitytext;
+	}
 	
 	
 	//Return the best label according to the probability array unless the best label is O.

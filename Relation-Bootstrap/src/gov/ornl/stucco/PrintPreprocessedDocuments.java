@@ -34,8 +34,8 @@ public class PrintPreprocessedDocuments
 	
 	public static void main(String[] args) throws IOException
 	{
-		AllKnownDatabaseRelationships.getAllKnownDatabaseRelationships();	//This populates the lists of aliases we need.
-	
+		GenericCyberEntityTextRelationship.loadAllKnownRelationships();
+		
 		
 		PrintWriter aliassubstitutednamesout = new PrintWriter(new FileWriter(aliassubstitutedentitynamesoutputfile));
 		PrintWriter completelyreplacednamesout = new PrintWriter(new FileWriter(completelyreplacedentitynamesoutputfile));
@@ -191,7 +191,7 @@ public class PrintPreprocessedDocuments
 	
 	private static String replaceWordSpecialCharacters(String word)
 	{
-		word = word.replaceAll("_", "-");
+		word = word.replaceAll("_", "~");
 		word = word.replaceAll("\\[", "(");
 		word = word.replaceAll("\\]", ")");
 		

@@ -32,7 +32,7 @@ public class SoftwareWVersion
 	
 	private static HashMap<String,ArrayList<String>> softwarealiasToaliases;
 	private static HashMap<String,ArrayList<String>> vendoraliasToaliases;
-	private static HashSet<String> allknownversions = new HashSet<String>();
+	private static HashSet<String> allknownversions;
 
 	private static HashMap<String,SoftwareWVersion> softwareidTosoftwarewversion = new HashMap<String,SoftwareWVersion>();
 	
@@ -70,12 +70,12 @@ public class SoftwareWVersion
 	
 	public ArrayList<String> getSoftwareAliases()
 	{
-		return softwarealiasToaliases.get(name);
+		return getsoftwarealiasToaliases().get(name);
 	}
 	
 	public ArrayList<String> getVendorAliases()
 	{
-		return vendoraliasToaliases.get(vendor);
+		return getvendoraliasToaliases().get(vendor);
 	}
 	
 	public void addRelationship(VulnerabilityToSoftwareWVersionRelationship relationship)
@@ -95,6 +95,9 @@ public class SoftwareWVersion
 	//If we have already created a SoftwareWVersion instance having this software id, get it from the softwareidTosoftwarewversion map and return it.  Else create it, add it to the map, then return it.
 	public static SoftwareWVersion getSoftwareFromSoftwareID(String softwareid)
 	{
+		if(softwareidTosoftwarewversion == null)
+			softwareidTosoftwarewversion = new HashMap<String,SoftwareWVersion>();
+		
 		SoftwareWVersion result = softwareidTosoftwarewversion.get(softwareid);
 		
 		if(result == null)
@@ -116,7 +119,12 @@ public class SoftwareWVersion
 			softwareidTosoftwarewversion.put(softwareid, result);
 			
 			if(version != null)
+			{
+				if(allknownversions == null)
+					allknownversions = new HashSet<String>();
+				
 				allknownversions.add(version);
+			}
 		}
 		
 		return result;
@@ -124,48 +132,59 @@ public class SoftwareWVersion
 
 	public static Collection<SoftwareWVersion> getAllSoftwareWVersions()
 	{
+		if(softwareidTosoftwarewversion == null)
+			GenericCyberEntityTextRelationship.loadAllKnownRelationships();
+		
 		return softwareidTosoftwarewversion.values();
 	}
 
 
 	public static void setAllAliases()
 	{	
-		FreebaseList software_developerslist = ListLoader.loadFreebaseList(softwarevendorsfilelocation, CyberHeuristicAnnotator.SW_VENDOR.toString());
-		vendoraliasToaliases = getAliasToAllAliases(software_developerslist);
-		
-		for(SoftwareWVersion swv : SoftwareWVersion.getAllSoftwareWVersions())
+		if(vendoraliasToaliases == null)
 		{
-			ArrayList<String> vendoraliases = swv.getVendorAliases();
-			if(swv.getVendorAliases() == null)
+			FreebaseList software_developerslist = ListLoader.loadFreebaseList(softwarevendorsfilelocation, CyberHeuristicAnnotator.SW_VENDOR.toString());
+			vendoraliasToaliases = getAliasToAllAliases(software_developerslist);
+		
+			for(SoftwareWVersion swv : SoftwareWVersion.getAllSoftwareWVersions())
 			{
-				vendoraliases = new ArrayList<String>();
-				vendoraliases.add(swv.getVendor());
-				vendoraliasToaliases.put(swv.getVendor(), vendoraliases);
+				ArrayList<String> vendoraliases = swv.getVendorAliases();
+				if(swv.getVendorAliases() == null)
+				{
+					vendoraliases = new ArrayList<String>();
+					vendoraliases.add(swv.getVendor());
+					vendoraliasToaliases.put(swv.getVendor(), vendoraliases);
+				}
 			}
 		}
 		
-			
-		softwarealiasToaliases = readSoftwaresAliases();
-		
-		for(SoftwareWVersion swv : SoftwareWVersion.getAllSoftwareWVersions())
+
+		if(softwarealiasTosoftwarewversionids == null)
+			softwarealiasTosoftwarewversionids = new HashMap<String,HashSet<String>>();
+		if(softwarealiasToaliases == null)
 		{
-			ArrayList<String> softwarealiases = swv.getSoftwareAliases();
-			if(swv.getSoftwareAliases() == null)
+			softwarealiasToaliases = readSoftwaresAliases();
+		
+			for(SoftwareWVersion swv : SoftwareWVersion.getAllSoftwareWVersions())
 			{
-				softwarealiases = new ArrayList<String>();
-				softwarealiases.add(swv.getName());
-				softwarealiasToaliases.put(swv.getName(), softwarealiases);
-			}
-			
-			for(String alias : softwarealiases)
-			{
-				HashSet<String> softwarewversionids = softwarealiasTosoftwarewversionids.get(alias);
-				if(softwarewversionids == null)
+				ArrayList<String> softwarealiases = swv.getSoftwareAliases();
+				if(swv.getSoftwareAliases() == null)
 				{
-					softwarewversionids = new HashSet<String>();
-					softwarealiasTosoftwarewversionids.put(alias, softwarewversionids);
+					softwarealiases = new ArrayList<String>();
+					softwarealiases.add(swv.getName());
+					softwarealiasToaliases.put(swv.getName(), softwarealiases);
 				}
-				softwarewversionids.add(swv.getSoftwareID());
+			
+				for(String alias : softwarealiases)
+				{
+					HashSet<String> softwarewversionids = softwarealiasTosoftwarewversionids.get(alias);
+					if(softwarewversionids == null)
+					{
+						softwarewversionids = new HashSet<String>();
+						softwarealiasTosoftwarewversionids.put(alias, softwarewversionids);
+					}
+					softwarewversionids.add(swv.getSoftwareID());
+				}
 			}
 		}
 	}
@@ -226,23 +245,6 @@ public class SoftwareWVersion
         	//Put the freebase name first.
         	if(allnames2.remove(name))
         		allnames2.add(0, name);
-        	////Put the longest alias first.
-        	//if(allnames2.size() > 0)
-        	//{
-        	//	int longestlength = -1;
-        	//	int longestlengthindex = -1;
-        	//	for(int i = 0; i < allnames2.size(); i++)
-        	//	{
-        	//		int ilength = allnames2.get(i).length();
-        	//		if(ilength > longestlength)
-        	//		{
-        	//			longestlength = ilength;
-        	//			longestlengthindex = i;
-        	//		}
-        	//	}
-        	//	String longestalias = allnames2.remove(longestlengthindex);
-        	//	allnames2.add(0, longestalias);
-        	//}
         }
         
         return aliasToallaliases;
@@ -250,6 +252,11 @@ public class SoftwareWVersion
 
 	public static ArrayList<SoftwareWVersion> getAllSoftwaresWithAlias(String alias)
 	{
+		if(softwarealiasTosoftwarewversionids == null)
+			setAllAliases();
+		if(softwareidTosoftwarewversion == null)
+			GenericCyberEntityTextRelationship.loadAllKnownRelationships();
+		
 		ArrayList<SoftwareWVersion> result = new ArrayList<SoftwareWVersion>();
 		
 		HashSet<String> versionids = softwarealiasTosoftwarewversionids.get(alias);
@@ -268,7 +275,7 @@ public class SoftwareWVersion
 	
 	public static String getCanonicalVendorAlias(String alias)
 	{
-		ArrayList<String> vendoraliases = vendoraliasToaliases.get(alias);
+		ArrayList<String> vendoraliases = getvendoraliasToaliases().get(alias);
 		if(vendoraliases != null && vendoraliases.size() > 0)
 			return vendoraliases.get(0);
 		
@@ -277,7 +284,7 @@ public class SoftwareWVersion
 	
 	public static String getCanonicalSoftwareAlias(String alias)
 	{
-		ArrayList<String> softwarealiases = softwarealiasToaliases.get(alias);
+		ArrayList<String> softwarealiases = getsoftwarealiasToaliases().get(alias);
 		if(softwarealiases != null && softwarealiases.size() > 0)
 			return softwarealiases.get(0);
 		
@@ -286,16 +293,37 @@ public class SoftwareWVersion
 
 	public static Set<String> getAllVendorAliases()
 	{
-		return vendoraliasToaliases.keySet();
+		return getvendoraliasToaliases().keySet();
 	}
 	
 	public static Set<String> getAllProductAliases()
 	{
-		return softwarealiasToaliases.keySet();
+		return getsoftwarealiasToaliases().keySet();
 	}
 	
 	public static Set<String> getAllVersions()
 	{
+		if(allknownversions == null)
+			GenericCyberEntityTextRelationship.loadAllKnownRelationships();
+		
 		return allknownversions;
 	}
+	
+
+	private static HashMap<String,ArrayList<String>> getsoftwarealiasToaliases()
+	{
+		if(softwarealiasToaliases == null)
+			setAllAliases();
+		
+		return softwarealiasToaliases;
+	}
+	
+	private static HashMap<String,ArrayList<String>> getvendoraliasToaliases()
+	{
+		if(vendoraliasToaliases == null)
+			setAllAliases();
+		
+		return vendoraliasToaliases;
+	}
+	
 }

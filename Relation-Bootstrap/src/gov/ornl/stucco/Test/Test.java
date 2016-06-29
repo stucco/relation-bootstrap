@@ -24,6 +24,7 @@ import gov.ornl.stucco.heurstics.utils.FreebaseList;
 import gov.ornl.stucco.heurstics.utils.ListLoader;
 import gov.ornl.stucco.heurstics.utils.TokenCyberLabelMap;
 import gov.ornl.stucco.CyberEntityText;
+import gov.ornl.stucco.GenericCyberEntityTextRelationship;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberConfidenceAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberEntityMentionsAnnotation;
@@ -39,7 +40,9 @@ public class Test
 	
 	public static void main(String[] args)
 	{
-		readEntityExtractedFiles();
+		testLoadingFix();
+		
+		//readEntityExtractedFiles();
 		
 		//readJsonTest();
 		
@@ -314,7 +317,19 @@ public class Test
 		}
 	}
 	
-
+	private static void testLoadingFix()
+	{
+		CyberEntityText a = new CyberEntityText("microsoft", CyberEntityText.SWVENDOR);
+		CyberEntityText b = new CyberEntityText("windows", CyberEntityText.SWPRODUCT);
+		//CyberEntityText b = new CyberEntityText("safari", CyberEntityText.SWPRODUCT);
+		//CyberEntityText b = new CyberEntityText("doors", CyberEntityText.SWPRODUCT);
+		
+		GenericCyberEntityTextRelationship relationship = new GenericCyberEntityTextRelationship(a, b);
+		
+		System.out.println(relationship.getRelationType());
+		
+		System.out.println(relationship.isKnownRelationship());
+	}
 
 
 }
