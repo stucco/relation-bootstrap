@@ -40,7 +40,9 @@ public class Test
 	
 	public static void main(String[] args)
 	{
-		testLoadingFix();
+		checkWorkingDirectories();
+		
+		//testLoadingFix();
 		
 		//readEntityExtractedFiles();
 		
@@ -331,5 +333,16 @@ public class Test
 		System.out.println(relationship.isKnownRelationship());
 	}
 
-
+	private static void checkWorkingDirectories()
+	{
+		System.out.println(System.getProperty("user.dir"));
+		
+		String currentdirectorypath = System.getProperty("user.dir");
+		File currentdirectory = new File(currentdirectorypath);
+		File shareddirectory = new File(currentdirectory.getParent(), "producedfiles");
+		
+		System.out.println(shareddirectory.getAbsoluteFile());
+	}
+	
+	
 }

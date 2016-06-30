@@ -9,11 +9,12 @@ import java.util.Arrays;
 
 public class TrainRelationSVMClassifier 
 {
-	private static File preprocessedfile = new File("/Users/p5r/stuccovm/preprocesseddata/aliassubstitutedentitynamesprocesseddocuments");
-	static File traininginstancesfile = new File("/Users/p5r/stuccovm/models/traininginstances");
+	//private static File preprocessedfile = new File("/Users/p5r/stuccovm/preprocesseddata/aliassubstitutedentitynamesprocesseddocuments");
+	//static File traininginstancesfile = new File("/Users/p5r/stuccovm/models/traininginstances");
 	
 	private static int relationshiptype;
 	private static String contexts;
+	private static String entityextractedfilename = "aliasreplaced";
 	
 	
 	public static void main(String[] args)
@@ -48,7 +49,7 @@ public class TrainRelationSVMClassifier
 	{
 		try
 		{
-			BufferedReader in = new BufferedReader(new FileReader(preprocessedfile));
+			BufferedReader in = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText(entityextractedfilename)));
 			String line;
 			while((line = in.readLine()) != null)
 			{

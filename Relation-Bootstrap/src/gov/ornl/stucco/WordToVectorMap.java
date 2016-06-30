@@ -8,8 +8,6 @@ import java.util.HashMap;
 
 public class WordToVectorMap extends HashMap<String,double[]>
 {
-	private static File wordvectorsfile = new File("/Users/p5r/stuccovm/models/wordvectors");
-	
 	private static WordToVectorMap themap = null;
 	
 	private int vectorlength;
@@ -24,7 +22,7 @@ public class WordToVectorMap extends HashMap<String,double[]>
 	{
 		try
 		{
-			BufferedReader in = new BufferedReader(new FileReader(wordvectorsfile));
+			BufferedReader in = new BufferedReader(new FileReader(wvf));
 			String line;
 			while((line = in.readLine()) != null)
 			{
@@ -51,7 +49,7 @@ public class WordToVectorMap extends HashMap<String,double[]>
 	public static WordToVectorMap getWordToVectorMap()
 	{
 		if(themap == null)
-			themap = new WordToVectorMap(wordvectorsfile);
+			themap = new WordToVectorMap(ProducedFileGetter.getWordVectorsFile());
 		
 		return themap;
 	}
