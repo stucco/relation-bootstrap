@@ -2,6 +2,9 @@ import gensim, logging, numpy
 
 #SentenceIterator is a class that iterates over the training sentences.  
 from SentenceIterator import SentenceIterator
+
+
+#I don't know what this does, but some gensim tutorial told me to include this line.
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 
