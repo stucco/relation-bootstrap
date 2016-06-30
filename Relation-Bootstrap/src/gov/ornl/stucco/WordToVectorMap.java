@@ -12,6 +12,8 @@ public class WordToVectorMap extends HashMap<String,double[]>
 	
 	private static WordToVectorMap themap = null;
 	
+	private int vectorlength;
+	
 	
 	WordToVectorMap(File wvf)
 	{
@@ -32,6 +34,8 @@ public class WordToVectorMap extends HashMap<String,double[]>
 				for(int i = 1; i < splitline.length; i++)
 					vector[i-1] = Double.parseDouble(splitline[i]);
 				put(word, vector);
+				
+				vectorlength = vector.length;
 			}
 			in.close();
 		}catch(IOException e)
@@ -50,5 +54,34 @@ public class WordToVectorMap extends HashMap<String,double[]>
 			themap = new WordToVectorMap(wordvectorsfile);
 		
 		return themap;
+	}
+	
+	
+	//Construct a vector corresponding to this context by averaging the vectors of its words.
+	public double[] getContextVector(String[] context)
+	{
+		double[] result = new double[vectorlength];
+		
+		int existingtokenscount = 0;	//Count the number of tokens in this context that we appear in our map.
+		for(String token : context)
+		{
+			double[] tokenvector = get(token);
+			
+			if(tokenvector != null)
+			{
+				existingtokenscount++;
+				
+				for(int i = 0; i < vectorlength; i++)
+					result[i] += tokenvector[i];
+			}
+		}
+		
+		if(existingtokenscount != 0)
+		{
+			for(int i = 0; i < vectorlength; i++)
+				result[i] /= existingtokenscount;
+		}
+		
+		return result;
 	}
 }

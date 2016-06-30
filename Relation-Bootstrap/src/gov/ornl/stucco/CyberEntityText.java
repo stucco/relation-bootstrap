@@ -137,6 +137,42 @@ public class CyberEntityText
 	}
 
 	
+	//If the token looks like a cyber entity token, return a CyberEntityText.  Otherwise, return null.
+	public static CyberEntityText getCyberEntityTextFromToken(String token)
+	{
+		int entitytype = getEntityTypeFromToken(token);
+		
+		if(entitytype == O)
+			return null;
+		else
+			return new CyberEntityText(token, entitytype);
+	}
+	
+	//Tokens from preprocessed documents are formatted in a certain way.  Particularly, if the token 
+	//is a cyber entity (as detected by the cyber entity detector), it will start with 
+	//[entity.type_word1_word2...].  If the token is not a cyber entity, there is no special formatting.
+	//This method returns the constant integer associated with the given entity's type, provided it is
+	//a cyber entity.  Otherwise, if it is not formatted like a cyber entity, it returns type O (the 
+	//non-entity type).
+	public static int getEntityTypeFromToken(String token)
+	{
+		if(token.charAt(0) != '[')
+			return O;
+		
+		int indexoffirstspace = token.indexOf('_');
+		if(indexoffirstspace <= 0)
+			return O;
+		
+		String tokenlabel = token.substring(1, indexoffirstspace);
+		Integer result = entitytypenameToentitytypeindex.get(tokenlabel);
+		
+		if(result == null)
+			return O;
+		
+		return result;
+	}
+	
+	
 	public static String getCanonicalName(String name, int entitytype)
 	{
 		ArrayList<Vulnerability> vulnerabilities;

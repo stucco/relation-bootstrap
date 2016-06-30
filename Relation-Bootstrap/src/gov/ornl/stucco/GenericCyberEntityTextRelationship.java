@@ -845,7 +845,6 @@ public class GenericCyberEntityTextRelationship
 	}
 	
 	
-	
 	//Just for testing, loads all known relationships and aliaes from xml and json files and prints statistics about them.
 	public static void main(String[] args)
 	{
