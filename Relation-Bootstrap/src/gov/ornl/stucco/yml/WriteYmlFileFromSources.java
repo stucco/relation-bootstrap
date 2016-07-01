@@ -26,7 +26,14 @@ import java.io.FileWriter;
 public class WriteYmlFileFromSources 
 {
 	private static File outputfile = new File("/Users/p5r/stuccovm/collectors.yml");
-	private static File sourcefile = new File("stucco/data/data/sources.json");
+	private static File sourcefile; // = new File("stucco/data/data/sources.json");
+	static
+	{
+		String currentdirectorypath = System.getProperty("user.dir");
+		File currentdirectory = new File(currentdirectorypath);
+		File parentdirectory = new File(currentdirectory.getParent());
+		sourcefile = new File(parentdirectory, "data/data/sources.json");
+	}
 	
 	
 	public static void main(String[] args) throws IOException
@@ -38,6 +45,8 @@ public class WriteYmlFileFromSources
 		ArrayList<YmlFileEntry> ymlfileentries = constructYmlFileEntriesFromSource();
 		
 		writeSources(out, ymlfileentries);
+		
+		printYmlFileEnding(out);
 		
 		out.close();
 	}
@@ -62,6 +71,13 @@ public class WriteYmlFileFromSources
 				+ "\n"
 				+ "\n  production:"
 				+ "\n	 collectors:");
+	}
+	
+	private static void printYmlFileEnding(PrintWriter out) throws IOException
+	{
+		out.println("vagrant:"
+			+ "\n	rabbitmq:"
+			+ "\n	host: localhost");
 	}
 	
 	
@@ -141,7 +157,7 @@ public class WriteYmlFileFromSources
 		{
 			if(entry.isWorkingType())
 			{
-				out.println("        -");
+				out.println("      -");
 				out.println(entry.toYmlString());
 				counter++;
 			}

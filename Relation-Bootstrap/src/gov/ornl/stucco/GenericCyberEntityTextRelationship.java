@@ -71,6 +71,7 @@ public class GenericCyberEntityTextRelationship
 	//in this array is positive if the entities appear in the standard order, and negative
 	//if the order is reversed.  The "standard" order is arbitrary, and is defined only in this array.
 	public static final Integer[][] entity1typeToentity2typeTorelationshiptype = new Integer[CyberEntityText.ENTITYTYPECOUNT][CyberEntityText.ENTITYTYPECOUNT];
+	public static final HashSet<Integer> allrelationshiptypesset = new HashSet<Integer>();
 	static
 	{
 		entity1typeToentity2typeTorelationshiptype[CyberEntityText.SWVENDOR][CyberEntityText.SWPRODUCT] = RT_SWVENDOR_SWPRODUCT;
@@ -103,7 +104,12 @@ public class GenericCyberEntityTextRelationship
 			for(int j = 0; j < CyberEntityText.ENTITYTYPECOUNT; j++)
 			{
 				if(entity1typeToentity2typeTorelationshiptype[i][j] != null)
+				{
 					entity1typeToentity2typeTorelationshiptype[j][i] = -entity1typeToentity2typeTorelationshiptype[i][j];
+					
+					allrelationshiptypesset.add(entity1typeToentity2typeTorelationshiptype[i][j]);
+					allrelationshiptypesset.add(-entity1typeToentity2typeTorelationshiptype[i][j]);
+				}
 			}
 		}
 	}
@@ -136,6 +142,16 @@ public class GenericCyberEntityTextRelationship
 		}
 		
 		return null;
+	}
+	
+	public CyberEntityText getFirstEntity()
+	{
+		return entities[0];
+	}
+	
+	public CyberEntityText getSecondEntity()
+	{
+		return entities[1];
 	}
 	
 	public Integer getRelationType()
@@ -339,6 +355,7 @@ public class GenericCyberEntityTextRelationship
 		
 		switch (getRelationType()) 
 		{
+			//Choose a function depending on the types of the entities involved.
         	case RT_SWVENDOR_SWPRODUCT:  return isKnownRelationship_SWVendor_SWProduct();
         	case RT_SWVERSION_SWPRODUCT:  return isKnownRelationship_SWVersion_SWProduct();
         	case RT_VUDESCRIPTION_VUNAME:  return isKnownRelationship_VUDescription_VUName();
@@ -363,6 +380,33 @@ public class GenericCyberEntityTextRelationship
         	case RT_VUNAME_FUNAME:	return isKnownRelationship_VUName_FUName();
         	case RT_VUCVE_FUNAME:	return isKnownRelationship_VUCVE_FUName();
         	case RT_VUMS_FUNAME:	return isKnownRelationship_VUMS_FUName();
+
+        	//Same as above, but for when the order of entities is reversed (and thus the relationship type number is negated)
+        	case -RT_SWVENDOR_SWPRODUCT:  return isKnownRelationship_SWVendor_SWProduct();
+        	case -RT_SWVERSION_SWPRODUCT:  return isKnownRelationship_SWVersion_SWProduct();
+        	case -RT_VUDESCRIPTION_VUNAME:  return isKnownRelationship_VUDescription_VUName();
+        	case -RT_VUMS_VUNAME:  return isKnownRelationship_VUMS_VUName();
+        	case -RT_VUCVE_VUNAME:  return isKnownRelationship_VUCVE_VUName();
+        	case -RT_VUDESCRIPTION_VUMS:  return isKnownRelationship_VUDescription_VUMS();
+        	case -RT_VUDESCRIPTION_VUCVE:  return isKnownRelationship_VUDescription_VUCVE();
+        	case -RT_VUCVE_VUMS:  return isKnownRelationship_VUCVE_VUMS();
+        	case -RT_SWPRODUCT_VUNAME:	return isKnownRelationship_SWProduct_VUName();
+        	case -RT_SWPRODUCT_VUMS:	return isKnownRelationship_SWProduct_VUMS();
+        	case -RT_SWPRODUCT_VUCVE:	return isKnownRelationship_SWProduct_VUCVE();
+        	case -RT_SWVERSION_VUNAME:	return isKnownRelationship_SWVersion_VUName();
+        	case -RT_SWVERSION_VUMS:	return isKnownRelationship_SWVersion_VUMS();
+        	case -RT_SWVERSION_VUCVE:	return isKnownRelationship_SWVersion_VUCVE();
+        	case -RT_SWPRODUCT_FINAME:	return isKnownRelationship_SWProduct_FIName();
+        	case -RT_SWVERSION_FINAME:	return isKnownRelationship_SWVersion_FIName();
+        	case -RT_SWPRODUCT_FUNAME:	return isKnownRelationship_SWProduct_FUName();
+        	case -RT_SWVERSION_FUNAME:	return isKnownRelationship_SWVersion_FUName();
+        	case -RT_VUNAME_FINAME:	return isKnownRelationship_VUName_FIName();
+        	case -RT_VUCVE_FINAME:	return isKnownRelationship_VUCVE_FIName();
+        	case -RT_VUMS_FINAME:	return isKnownRelationship_VUMS_FIName();
+        	case -RT_VUNAME_FUNAME:	return isKnownRelationship_VUName_FUName();
+        	case -RT_VUCVE_FUNAME:	return isKnownRelationship_VUCVE_FUName();
+        	case -RT_VUMS_FUNAME:	return isKnownRelationship_VUMS_FUName();
+        	
         	default: return null;
 		}
 	}
@@ -837,9 +881,9 @@ public class GenericCyberEntityTextRelationship
 	public String getEntityTextGivenType(int entitytype)
 	{
 		if(entities[0].getEntityType() == entitytype)
-			return entities[0].getEntityText();
+			return entities[0].getEntitySpacedText();
 		else if(entities[1].getEntityType() == entitytype)
-			return entities[1].getEntityText();
+			return entities[1].getEntitySpacedText();
 		
 		return null;
 	}
@@ -979,5 +1023,13 @@ public class GenericCyberEntityTextRelationship
 		System.out.println("vuln.* & function.name:\t" + relationholder.size());
 	}
 	
+	public static HashSet<Integer> getAllRelationshipTypesSet()
+	{
+		return allrelationshiptypesset;
+	}
 
+	public String toString()
+	{
+		return entities[0] + "\t" + entities[1] + "\t" + getRelationType();
+	}
 }

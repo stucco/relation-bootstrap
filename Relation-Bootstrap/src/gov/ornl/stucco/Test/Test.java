@@ -25,6 +25,8 @@ import gov.ornl.stucco.heurstics.utils.ListLoader;
 import gov.ornl.stucco.heurstics.utils.TokenCyberLabelMap;
 import gov.ornl.stucco.CyberEntityText;
 import gov.ornl.stucco.GenericCyberEntityTextRelationship;
+import gov.ornl.stucco.ObjectRank;
+import gov.ornl.stucco.WordToVectorMap;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberConfidenceAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberEntityMentionsAnnotation;
@@ -40,7 +42,9 @@ public class Test
 	
 	public static void main(String[] args)
 	{
-		checkWorkingDirectories();
+		findNearestWords();
+		
+		//checkWorkingDirectories();
 		
 		//testLoadingFix();
 		
@@ -344,5 +348,14 @@ public class Test
 		System.out.println(shareddirectory.getAbsoluteFile());
 	}
 	
-	
+	private static void findNearestWords()
+	{
+		WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap("aliasreplaced");
+		
+		String testword = "[sw.product_flash_player]";
+		ArrayList<ObjectRank> rankedwords = wvm.findNearestWords(testword);
+		
+		for(ObjectRank or : rankedwords)
+			System.out.println(or.obj + "\t" + or.value);
+	}
 }

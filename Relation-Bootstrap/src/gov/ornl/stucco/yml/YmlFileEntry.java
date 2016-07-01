@@ -93,16 +93,16 @@ public class YmlFileEntry
 	{
 		String result = "";
         
-		result += "          type: " + getYmlType() + "\n";
-        //result += "          data-type: " + getStructuredOrUnstructured() + "\n";
-		result += "          data-type: unstructured\n";	//Kelly says we only want unstructured documents.  Also there is no extractor for structured documents running on the virtual machine.
-        result += "          source-name: " + name + "\n";
+		result += "        type: " + getYmlType() + "\n";
+        //result += "        data-type: " + getStructuredOrUnstructured() + "\n";
+		result += "        data-type: unstructured\n";	//Kelly says we only want unstructured documents.  Also there is no extractor for structured documents running on the virtual machine.
+        result += "        source-name: " + name + "\n";
         if(isZipped())
-        	result += "          post-process: unzip\n";
-        result += "          source-URI: " + url + "\n";
-        result += "          content-type : " + getContentType() + "\n";
-        result += "          now-collect: all\n";
-        result += "          cron: 0 0 * * * ?";
+        	result += "        post-process: unzip\n";
+        result += "        source-URI: " + url + "\n";
+        result += "        content-type : " + getContentType() + "\n";
+        result += "        now-collect: all\n";
+        result += "        cron: 0 40 * * * ?";
         
         return result;
 	}

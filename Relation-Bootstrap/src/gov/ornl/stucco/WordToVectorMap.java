@@ -4,10 +4,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class WordToVectorMap extends HashMap<String,double[]>
 {
+	private static HashMap<String,WordToVectorMap> typeTomap = new HashMap<String,WordToVectorMap>();
 	private static WordToVectorMap themap = null;
 	
 	private int vectorlength;
@@ -46,12 +49,17 @@ public class WordToVectorMap extends HashMap<String,double[]>
 	
 	
 	
-	public static WordToVectorMap getWordToVectorMap()
+	public static WordToVectorMap getWordToVectorMap(String trainingtype)
 	{
-		if(themap == null)
-			themap = new WordToVectorMap(ProducedFileGetter.getWordVectorsFile());
+		WordToVectorMap wvm = typeTomap.get(trainingtype);
+		if(wvm == null)
+		{
+			File f = ProducedFileGetter.getWordVectorsFile(trainingtype);
+			wvm = new WordToVectorMap(f);
+			typeTomap.put(trainingtype, wvm);
+		}
 		
-		return themap;
+		return wvm;
 	}
 	
 	
@@ -79,6 +87,68 @@ public class WordToVectorMap extends HashMap<String,double[]>
 			for(int i = 0; i < vectorlength; i++)
 				result[i] /= existingtokenscount;
 		}
+		
+		return result;
+	}
+
+
+	public ArrayList<ObjectRank> findNearestWords(String testword)
+	{
+		ArrayList<ObjectRank> similarityrankedwords = new ArrayList<ObjectRank>();
+		
+		double[] testwordvector = get(testword);
+		for(String word : keySet())
+		{
+			double[] wordvector = get(word);
+			
+			//similarityrankedwords.add(new ObjectRank(word, cosineSimilarity(testwordvector, wordvector)));
+			similarityrankedwords.add(new ObjectRank(word, vectorDistance(testwordvector, wordvector)));
+		}
+		
+		Collections.sort(similarityrankedwords);
+		//Collections.reverse(similarityrankedwords);
+		
+		return similarityrankedwords;
+	}
+	
+	public static double vectorDistance(double[] v1, double[] v2)
+	{
+		double result = 0.;
+		
+		for(int i = 0; i < v1.length; i++)
+		{
+			double dif = v1[i] - v2[i];
+			result += dif * dif;
+		}
+		
+		return Math.sqrt(result);
+	}
+	
+	public static double cosineSimilarity(double[] v1, double[] v2)
+	{
+		double dotproduct = dotProduct(v1, v2);
+		double v1length = vectorLength(v1);
+		double v2length = vectorLength(v2);
+		
+		return dotproduct / (v1length * v2length);
+	}
+	
+	public static double vectorLength(double[] vector)
+	{
+		double result = 0.;
+		
+		for(double v : vector)
+			result += v * v;
+		
+		return Math.sqrt(result);
+	}
+	
+	public static double dotProduct(double[] v1, double[] v2)
+	{
+		double result = 0.;
+		
+		for(int i = 0; i < v1.length; i++)
+			result += v1[i] * v2[i];
 		
 		return result;
 	}

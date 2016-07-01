@@ -107,7 +107,25 @@ public class CyberEntityText
 	{
 		return entitytext;
 	}
-	
+
+	public String getEntitySpacedText()
+	{
+		if(entitytext.startsWith("["))
+		{
+			String result = entitytext.toLowerCase();
+			if(result.contains("_"))
+			{
+				result = result.substring(result.indexOf('_')+1, result.length()-1);
+				result = result.replaceAll("_", " ");
+				result = result.trim();
+				
+				return result;
+			}
+		}
+
+		
+		return entitytext;
+	}
 	
 	//Return the best label according to the probability array unless the best label is O.
 	//If the best label is O, return the second best label if its value exceeds Othreshold.
@@ -219,6 +237,11 @@ public class CyberEntityText
 		  }
 		  
 		 return result;
+	}
+	
+	public String toString()
+	{
+		return entitytext;
 	}
 
 }
