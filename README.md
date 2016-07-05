@@ -16,9 +16,9 @@ We assume that cyber entity extracted versions of the documents have already bee
 
 #### Run this program:
 
-	*gov.ornl.stucco.PrintPreprocessedDocuments*
+	gov.ornl.stucco.PrintPreprocessedDocuments
 
-It takes the output produced by the entity-extractor in the form of serialized documents and produces text versions of them in 
+This program takes the output produced by the entity-extractor in the form of serialized documents and produces text versions of them in 
 *relation-bootstrap/producedfiles/entityextractedtext/* .  The three files are called *aliasreplaced*, *entityreplaced*, and *original*.  Details of these files’ contents can be seen in comments at the top of *gov.ornl.stucco.PrintPreprocessedDocuments.java*.
 
 ---
@@ -28,7 +28,7 @@ It takes the output produced by the entity-extractor in the form of serialized d
 
 #### Run this program:
 
-	*TrainModel.py preprocessedtype*
+	TrainModel.py preprocessedtype
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 
@@ -41,13 +41,12 @@ This program takes the output from the previous program and trains a word2vec mo
 
 #### Run this program:
 
-	*WriteRelationInstanceFiles preprocessedtype contexts*
+	WriteRelationInstanceFiles preprocessedtype contexts
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	contexts = 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111
 
-This program takes the output of the previous two programs to write a lot of training files for relationship SVM classifiers.  preprocessedtype tells the program which output files written by the previous two programs to use, and contexts tells it which feature representation to use.  More specifically, this argument tells us whether or not we want to use the context preceding the first entity (first digit), whether or not we want to use the context between entities (second digit), and whether or not we want to use the context after the second entity (third digit).  A 1 in one of these spots
-indicates that we do want to use the corresponding context, and a zero indicates that we don't.
+This program takes the output of the previous two programs to write a lot of data files for relationship SVM classifiers.  preprocessedtype tells the program which output files written by the previous two programs to use, and contexts tells it which feature representation to use.  More specifically, this argument tells us whether or not we want to use the context preceding the first entity (first digit), whether or not we want to use the context between entities (second digit), and whether or not we want to use the context after the second entity (third digit).  A 1 in one of these spots indicates that we do want to use the corresponding context, and a zero indicates that we don't.
 
 ---
 
@@ -56,12 +55,12 @@ indicates that we do want to use the corresponding context, and a zero indicates
 
 #### Run this program:
 
-	*TrainRelationSVMClassifier preprocessedtype contexts kerneltype*
+	RunRelationSVMs preprocessedtype contexts kerneltype
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	contexts = 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111
 	kerneltype = RBF | Linear
 
-This program takes the training data written by the previous program and trains a SVM on it.  So it will not run properly unless WriteRelationInstanceFiles has been run using the same preprocessedtype and contexts parameters.  kerneltype refers to the type of kernel used in the SVM.
+This program takes the instance data written by the previous program, trains a SVM on it, and applies the SVM to a test set.  So it will not run properly unless WriteRelationInstanceFiles has been run using the same preprocessedtype and contexts parameters.  kerneltype refers to the type of kernel used in the SVM.
 
 

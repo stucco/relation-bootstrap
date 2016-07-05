@@ -72,7 +72,7 @@ public class WriteRelationInstanceFiles
 		{
 			for(Integer i : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 			{
-				File f = ProducedFileGetter.getRelationshipTrainingFile(entityextractedfilename, contexts, i);
+				File f = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, i);
 				relationtypeToprintwriter.put(i, new PrintWriter(new FileWriter(f)));
 			}
 		}catch(IOException e)
@@ -96,6 +96,7 @@ public class WriteRelationInstanceFiles
 			//entities.
 			BufferedReader aliasalignedin = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText("aliasreplaced")));
 			
+			int linecounter = 0;	//Keep track of the number of the line we are on in the file.  We'll make a note of what line our instances come from in this way.
 			
 			//Each line in this file is a single sentence.  Relationships can only be extracted if both 
 			//participating entities appear in the same sentence.  We do not do coreference resolution,
@@ -105,6 +106,9 @@ public class WriteRelationInstanceFiles
 			{
 				//Read the corresponding line from the alias replaced text file.
 				String aliasedline = aliasalignedin.readLine();
+				
+				
+				linecounter++;
 				
 				
 				//The text files contain a blank line between documents.  Just ignore them.
@@ -172,13 +176,13 @@ public class WriteRelationInstanceFiles
 									Boolean isknownrelationship = aliasedrelationship.isKnownRelationship();
 									
 	
-									//Notice that isknownrelationship is a Boolean (an object) rather than a primitive
-									//boolean.  This means it can be true, false, or null.  It should be true
-									//if this is a known relationship, false if we think it is known that it is not
-									//a relationship, and null if we do not know.  As long as it is true or false,
-									//it can be used for training, so check for null.
-									if(isknownrelationship != null)
-									{
+									////Notice that isknownrelationship is a Boolean (an object) rather than a primitive
+									////boolean.  This means it can be true, false, or null.  It should be true
+									////if this is a known relationship, false if we think it is known that it is not
+									////a relationship, and null if we do not know.  As long as it is true or false,
+									////it can be used for training, so check for null.
+									//if(isknownrelationship != null)
+									//{
 										//Construct the context
 										//vectors using the tokens in the appropriate context windows and
 										//the word vectors.  Concatenate all the chosen vectors into one
@@ -223,13 +227,13 @@ public class WriteRelationInstanceFiles
 										
 										//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
 										//add the entity names to the end of the line.
-										instanceline += " #" + relationship.getFirstEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText();
+										instanceline += " # " + linecounter + " " + i + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + relationship.getSecondEntity().getEntityText();
 										
 										
 										//And finally, print it to the appropriate file using the PrintWriter we 
 										//made earlier.
 										pw.println(instanceline);
-									}
+									//}
 								}
 							}
 						}
@@ -248,10 +252,12 @@ public class WriteRelationInstanceFiles
 	
 	
 	//This method takes a proposed relationship and a feature vector representation.  It checks 
-	public static String buildSVMLightLine(boolean isknownrelationship, ArrayList<Double> contextvectors)
+	public static String buildSVMLightLine(Boolean isknownrelationship, ArrayList<Double> contextvectors)
 	{
 		String result = "";
-		if(isknownrelationship)
+		if(isknownrelationship == null)
+			result += "0";
+		else if(isknownrelationship)
 			result += "+1";
 		else
 			result += "-1";

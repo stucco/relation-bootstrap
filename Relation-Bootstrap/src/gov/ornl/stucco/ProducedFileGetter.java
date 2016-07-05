@@ -47,12 +47,41 @@ public class ProducedFileGetter
 	//getEntityExtractedText(String filename) will previously have been used to get this file for writing.
 	//contexts is a three digit code composed of 0s and 1s indicating which context windows are/were used to 
 	//generate the contents of the file.
-	public static File getRelationshipTrainingFile(String entityextractedfilename, String contexts, int relationshiptype)
+	public static File getRelationshipSVMInstancesFile(String entityextractedfilename, String contexts, int relationshiptype)
 	{
-		File dir = new File(shareddirectory, "svmfiles/");
+		File dir = new File(shareddirectory, "instancefiles/");
 		dir.mkdirs();
 		
-		String filename = "Training." + entityextractedfilename + "." + contexts + "." + relationshiptype;
+		String filename = "RelationInstances." + entityextractedfilename + "." + contexts + "." + relationshiptype;
+		
+		return new File(dir, filename);
+	}
+	
+	
+	//This file contains predictions made by an SVM.
+	public static File getResultsFile(String kerneltype, String entityextractedfilename, String contexts, int relationshiptype)
+	{
+		File dir = new File(shareddirectory, "resultfiles/");
+		dir.mkdirs();
+		
+		String filename = "Results." + kerneltype + "." + entityextractedfilename + "." + contexts + "." + relationshiptype;
+		
+		return new File(dir, filename);
+	}
+
+	
+	
+	
+	public static File getSVMModelFile(String kerneltype, String entityextractedfilename, String contexts, int relationshiptype, int excludedfold1, int excludedfold2, double c, double gamma)
+	{
+		File dir = new File(shareddirectory, "svmmodelfiles/");
+		dir.mkdirs();
+		
+		//Replace the decimals in c and gamma with commas because periods are used as separators in the file name.
+		String cstring = ("" + c).replaceAll("\\.", ",");
+		String gammastring = ("" + gamma).replaceAll("\\.", ",");
+		
+		String filename = "SVMModel." + kerneltype + "." + entityextractedfilename + "." + contexts + "." + relationshiptype + "." + excludedfold1 + "." + excludedfold2 + "." + cstring + "." + gammastring;
 		
 		return new File(dir, filename);
 	}
@@ -64,6 +93,23 @@ public class ProducedFileGetter
 		dir.mkdirs();
 		
 		return dir;
+	}
+	
+	
+	public static File getLibSVMJarFile()
+	{
+		String currentdirectorypath = System.getProperty("user.dir");
+		File currentdirectory = new File(currentdirectorypath);
+		
+		return new File(currentdirectory.getParent(), "ExecutableJars/libsvm.jar");
+	}
+	
+	
+	public static File getTemporaryFile(String tempfilename)
+	{
+		String currentdirectorypath = System.getProperty("user.dir");
+		File currentdirectory = new File(currentdirectorypath);
+		return new File(currentdirectory.getParent(), "temp/" + tempfilename);
 	}
 	
 	
