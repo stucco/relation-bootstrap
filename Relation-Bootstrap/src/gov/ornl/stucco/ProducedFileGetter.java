@@ -72,7 +72,7 @@ public class ProducedFileGetter
 	
 	
 	
-	public static File getSVMModelFile(String kerneltype, String entityextractedfilename, String contexts, int relationshiptype, int excludedfold1, int excludedfold2, double c, double gamma)
+	public static File getSVMModelFile(String kerneltype, String entityextractedfilename, String contexts, int relationshiptype, Integer excludedfold1, Integer excludedfold2, double c, double gamma)
 	{
 		File dir = new File(shareddirectory, "svmmodelfiles/");
 		dir.mkdirs();
@@ -107,9 +107,10 @@ public class ProducedFileGetter
 	
 	public static File getTemporaryFile(String tempfilename)
 	{
-		String currentdirectorypath = System.getProperty("user.dir");
-		File currentdirectory = new File(currentdirectorypath);
-		return new File(currentdirectory.getParent(), "temp/" + tempfilename);
+		File result = new File(shareddirectory, "temp/" + tempfilename);
+		result.getParentFile().mkdirs();
+		
+		return result;
 	}
 	
 	

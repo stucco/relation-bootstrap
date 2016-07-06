@@ -40,7 +40,9 @@ public class RunRelationSVMs
 	private static String contexts;
 	private static String kerneltype;
 	
-	private static int folds = 5;
+	//private static int folds = 5;
+	//This is the number of folds we use for cross validation.  The null at the end handles the real world case where we want to use all the training data possible.  This is kind of an ugly solution, but not as ugly as some of the alternatives for solving this problem.
+	private static Integer[] folds = {0, 1, 2, 3, 4, null};
 	
 	
 	public static void main(String[] args) throws IOException, InterruptedException
@@ -73,10 +75,22 @@ public class RunRelationSVMs
 			PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getResultsFile(kerneltype, entityextractedfilename, contexts, relationtype)));
 			
 			//In order to do cross-validation, we need to set aside two folds for tuning parameters and testing.  So testfold1 and testfold2 will be those folds.  All the other folds can be used for training.
-			for(int testfold1 = 0; testfold1 < folds; testfold1++)
+			for(int t1index = 0; t1index < folds.length; t1index++)
+			//for(int testfold1 = 0; testfold1 < folds; testfold1++)
 			{
-				for(int testfold2 = testfold1; testfold2 < folds; testfold2++)
+				Integer testfold1 = folds[t1index];
+				
+				for(int t2index = t1index; t2index < folds.length; t2index++)
+				//for(int testfold2 = testfold1; testfold2 < folds; testfold2++)
 				{
+					Integer testfold2 = folds[t2index];
+					
+					
+					//As mentioned above, the null value is included because of the case where we want to use all data for training and testing. But this is only one case.  We do not need to pair null with any other test fold.  So if either of the two testfolds == null, just skip this iteration.  But if both of them are null, do this special training and testing.
+					if( ( testfold1 == null || testfold2 == null ) && !(testfold1 == null && testfold2 == null) )
+						continue;
+					
+					
 					//Write the training data to a temporary file.  Since testing is, by comparison, super fast, run testing too.
 					writeSVMFiles(relationtype, testfold1, testfold2, entityextractedfilename, contexts, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
 						
@@ -119,7 +133,7 @@ public class RunRelationSVMs
 							
 							
 							//Recall that we left two folds out of the training set.  If those two folds are not the same, also apply the model to and print the results from the other fold.
-							if(testfold1 != testfold2)
+							if(testfold1 != testfold2 && (testfold1 != null & testfold2 != null))
 							{
 								String[] t2array = {"java", "-cp", libsvmjar.getAbsolutePath(), "svm_predict", testfile2.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile2.getAbsolutePath()};
 								Process t2process = (new ProcessBuilder(t2array)).start();
@@ -188,7 +202,7 @@ public class RunRelationSVMs
 	}
 	
 	
-	private static void writeSVMFiles(int relationtype, int excludedfold1, int excludedfold2, String entityextractedfilename, String contexts, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
+	private static void writeSVMFiles(int relationtype, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String contexts, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
 	{
 		File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, relationtype);
 	
@@ -206,10 +220,10 @@ public class RunRelationSVMs
 			String line;
 			while((line = in.readLine()) != null)
 			{
-				int whichfold = isInWhichFold(line, excludedfold1, excludedfold2);
+				Integer whichfold = isInWhichFold(line, excludedfold1, excludedfold2);
 				String[] instanceAndcomments = line.split("#");
 				
-				if(whichfold == 0)
+				if(whichfold == 0 || whichfold == 3)	//The instance is in neither test fold, and can therefore be used for training, or we are in the special case where we are processing all folds as training and test data.
 				{
 					if(!line.startsWith("0"))	//Use this line for training only if we can confidently heuristically classify it (and thus the line would start with "+1" or "-1").
 					{
@@ -219,12 +233,12 @@ public class RunRelationSVMs
 						foundatleastonetrainingexample = true;
 					}
 				}
-				else if(whichfold == 1)
+				if(whichfold == 1 || whichfold == 3)	//The instance is in test fold 1, or we are in the special case where we are processing all folds as training and test data.
 				{
 					testout1.println(instanceAndcomments[0]);
 					testout1comments.println(instanceAndcomments[1]);
 				}
-				else if(whichfold == 2)
+				if(whichfold == 2 || whichfold == 3)	//The instance is in test fold 2, or we are in the special case where we are processing all folds as training and test data.
 				{
 					testout2.println(instanceAndcomments[0]);
 					testout2comments.println(instanceAndcomments[1]);
@@ -253,16 +267,18 @@ public class RunRelationSVMs
 		}
 	}
 	
-	//Returns 0 if the instance is in one of the training folds, 1 if it is in excludedfold1, or 2 if it is in excludedfold2.
-	public static int isInWhichFold(String instanceline, int excludedfold1, int excludedfold2)
+	//Returns 0 if the instance is in one of the training folds, 1 if it is in excludedfold1, or 2 if it is in excludedfold2.  Returns 3 in the special case where both excluded folds are null (the case where we want to train and test on all available instances).
+	public static int isInWhichFold(String instanceline, Integer excludedfold1, Integer excludedfold2)
 	{
 		String[] splitline = instanceline.split("#");
 		String linecomment = splitline[1];
 		String sentencenumstring = linecomment.substring(1, linecomment.indexOf(' ', 1));
 		int sentencenum = Integer.parseInt(sentencenumstring);
 		
-		int modnum = sentencenum % folds;
+		int modnum = sentencenum % (folds.length - 1);
 		
+		if(excludedfold1 == null && excludedfold2 == null)
+			return 3;
 		if(modnum == excludedfold1)
 			return 1;
 		else if(modnum == excludedfold2)
@@ -273,9 +289,13 @@ public class RunRelationSVMs
 	
 
 	//This is a little helper function for constructing the code that explains which test folds were not used in training the model that produced these results.
-	public static String getFoldSplitString(int testfold1, int testfold2)
+	public static String getFoldSplitString(Integer testfold1, Integer testfold2)
 	{
-		if(testfold1 < testfold2)
+		if(testfold1 == null)
+			return testfold2 + "," + testfold1;
+		else if(testfold2 == null)
+			return testfold1 + "," + testfold2;
+		else if(testfold1 < testfold2)
 			return testfold1 + "," + testfold2;
 		else
 			return testfold2 + "," + testfold1;
