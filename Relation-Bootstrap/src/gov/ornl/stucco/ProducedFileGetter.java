@@ -4,6 +4,11 @@
  * needs to share some files with a related Python project, and I thought it would be easiest to
  * keep the file names consistent between the two projects if the Java portion retreived all file
  * locations from the same class.
+ * 
+ * I think I am assuming that it is being run from the java project's base directory, but I am 
+ * not sure.  This matters because I try to follow a relative path from the project's base 
+ * directory to various files we need in the different methods.  See the static block near the top
+ * where I set the shared directory for how I do this.
  */
 
 package gov.ornl.stucco;
@@ -101,7 +106,7 @@ public class ProducedFileGetter
 		String currentdirectorypath = System.getProperty("user.dir");
 		File currentdirectory = new File(currentdirectorypath);
 		
-		return new File(currentdirectory.getParent(), "ExecutableJars/libsvm.jar");
+		return new File(currentdirectory, "lib/libsvm.jar");
 	}
 	
 	

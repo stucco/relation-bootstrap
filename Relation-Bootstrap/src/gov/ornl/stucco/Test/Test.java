@@ -42,7 +42,9 @@ public class Test
 	
 	public static void main(String[] args)
 	{
-		findNearestWords();
+		testCurrentWorkingDirectory();
+		
+		//findNearestWords();
 		
 		//checkWorkingDirectories();
 		
@@ -358,4 +360,12 @@ public class Test
 		for(ObjectRank or : rankedwords)
 			System.out.println(or.obj + "\t" + or.value);
 	}
+
+	private static void testCurrentWorkingDirectory()
+	{
+		String currentdirectorypath = System.getProperty("user.dir");
+		
+		System.out.println(currentdirectorypath);
+	}
+
 }

@@ -14,9 +14,16 @@ We assume that cyber entity extracted versions of the documents have already bee
 <br>
 
 
+####Place decompressed xml files in 
+
+---
+
+<br>
+
+
 #### Run this program:
 
-	gov.ornl.stucco.PrintPreprocessedDocuments
+	PrintPreprocessedDocuments
 
 This program takes the output produced by the entity-extractor in the form of serialized documents and produces text versions of them in 
 *relation-bootstrap/producedfiles/entityextractedtext/* .  The three files are called *aliasreplaced*, *entityreplaced*, and *original*.  Details of these files’ contents can be seen in comments at the top of *gov.ornl.stucco.PrintPreprocessedDocuments.java*.
