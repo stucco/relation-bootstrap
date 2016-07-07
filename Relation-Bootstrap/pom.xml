@@ -22,6 +22,15 @@
           <target>1.8</target>
         </configuration>
       </plugin>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-scm-plugin</artifactId>
+			<version>1.9</version>
+			<configuration>
+				<connectionUrl>scm:git:https://github.com/stucco/${module.name}.git</connectionUrl>
+				<checkoutDirectory>${module.name}</checkoutDirectory>
+			</configuration>
+		</plugin>
     </plugins>
   </build>
   <dependencies>
@@ -36,9 +45,9 @@
   		<version>1.1.1</version>
   	</dependency>
   	<dependency>
-  		<groupId>gov.ornl.stucco</groupId>
-  		<artifactId>entity-extractor</artifactId>
-  		<version>1.0.0</version>
+  		<groupId>commons-io</groupId>
+  		<artifactId>commons-io</artifactId>
+  		<version>2.5</version>
   	</dependency>
   </dependencies>
 </project>

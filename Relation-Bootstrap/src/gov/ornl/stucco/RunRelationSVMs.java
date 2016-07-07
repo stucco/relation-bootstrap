@@ -144,6 +144,9 @@ public class RunRelationSVMs
 								
 								printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + contexts, testresultsout, testfile2, testfile2comments, testpredictionsfile2);
 							}
+							
+							if(!(testfold1 == null && testfold2 == null))
+								modelfile.delete();
 						}
 					}
 				}

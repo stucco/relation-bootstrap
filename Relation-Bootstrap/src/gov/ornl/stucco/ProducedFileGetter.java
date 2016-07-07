@@ -119,6 +119,15 @@ public class ProducedFileGetter
 	}
 	
 	
+	public static File getLemmatizedWikipediaFile()
+	{
+		File result = new File(shareddirectory, "WikipediaLemmatized/wikipedialemmatized.zip");
+		result.getParentFile().mkdirs();
+		
+		return result;
+	}
+	
+	
 	//Purely for testing
 	public static void main(String[] args)
 	{

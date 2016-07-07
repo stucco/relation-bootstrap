@@ -343,6 +343,7 @@ public class GenericCyberEntityTextRelationship
 						}
 			        }
 				}
+			    zipfile.close();
 			}
 		}catch(ParserConfigurationException | IOException | SAXException e)
 		{
