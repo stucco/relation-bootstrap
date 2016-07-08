@@ -11,7 +11,7 @@
  * where I set the shared directory for how I do this.
  */
 
-package gov.ornl.stucco;
+package gov.ornl.stucco.relationprediction;
 
 import java.io.File;
 

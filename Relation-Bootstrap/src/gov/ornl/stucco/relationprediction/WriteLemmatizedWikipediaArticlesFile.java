@@ -6,7 +6,7 @@
  * The files will be used for training a word2vec model.
  */
 
-package gov.ornl.stucco;
+package gov.ornl.stucco.relationprediction;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;

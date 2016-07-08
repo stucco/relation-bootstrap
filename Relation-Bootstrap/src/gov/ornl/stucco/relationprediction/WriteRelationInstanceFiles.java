@@ -5,7 +5,7 @@
  */
 
 
-package gov.ornl.stucco;
+package gov.ornl.stucco.relationprediction;
 
 
 import java.io.BufferedReader;

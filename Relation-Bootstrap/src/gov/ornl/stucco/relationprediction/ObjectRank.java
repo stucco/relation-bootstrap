@@ -1,4 +1,4 @@
-package gov.ornl.stucco;
+package gov.ornl.stucco.relationprediction;
 
 public class ObjectRank implements Comparable<ObjectRank>
 {

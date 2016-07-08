@@ -1,4 +1,4 @@
-package gov.ornl.stucco.yml;
+package gov.ornl.stucco.relationprediction.yml;
 
 import java.util.Iterator;
 import java.util.HashMap;

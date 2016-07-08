@@ -1,4 +1,4 @@
-package gov.ornl.stucco.yml;
+package gov.ornl.stucco.relationprediction.yml;
 
 /*
  * This program's purpose is to write the configure .yml file needed for the collector to collect

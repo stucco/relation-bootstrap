@@ -11,7 +11,7 @@
  * their predicted entity type and canonical name.
  */
 
-package gov.ornl.stucco;
+package gov.ornl.stucco.relationprediction;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

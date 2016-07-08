@@ -1,4 +1,4 @@
-package gov.ornl.stucco.Test;
+package gov.ornl.stucco.relationprediction.Test;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -27,10 +27,10 @@ import gov.ornl.stucco.heurstics.utils.FreebaseEntry;
 import gov.ornl.stucco.heurstics.utils.FreebaseList;
 import gov.ornl.stucco.heurstics.utils.ListLoader;
 import gov.ornl.stucco.heurstics.utils.TokenCyberLabelMap;
-import gov.ornl.stucco.CyberEntityText;
-import gov.ornl.stucco.GenericCyberEntityTextRelationship;
-import gov.ornl.stucco.ObjectRank;
-import gov.ornl.stucco.WordToVectorMap;
+import gov.ornl.stucco.relationprediction.CyberEntityText;
+import gov.ornl.stucco.relationprediction.GenericCyberEntityTextRelationship;
+import gov.ornl.stucco.relationprediction.ObjectRank;
+import gov.ornl.stucco.relationprediction.WordToVectorMap;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberConfidenceAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberEntityMentionsAnnotation;
