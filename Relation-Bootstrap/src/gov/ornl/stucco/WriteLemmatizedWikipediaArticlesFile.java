@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Properties;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
@@ -36,15 +37,6 @@ public class WriteLemmatizedWikipediaArticlesFile
 	
 	public static void main(String[] args) throws IOException
 	{	
-		File outputfile = ProducedFileGetter.getLemmatizedWikipediaFile();
-		//PrintWriter out = new PrintWriter(new FileWriter(outputfile));
-		
-		FileOutputStream dest = new FileOutputStream(outputfile);
-		ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
-		
-		
-		
-		
 		//Properties for the automatic annotation process.
 		Properties props = new Properties();
 		//props.setProperty("ssplit.eolonly", "true");
@@ -54,8 +46,18 @@ public class WriteLemmatizedWikipediaArticlesFile
 		edu.stanford.nlp.pipeline.StanfordCoreNLP pipeline = new edu.stanford.nlp.pipeline.StanfordCoreNLP(props);
 	
 		
-		for(File f : wikiarticlesdirectory.listFiles())
+		File[] wikiarticles = wikiarticlesdirectory.listFiles();
+		for(int i = 0; i < wikiarticles.length; i++)
 		{
+			File f = wikiarticles[i];
+			
+
+			File outputfile = ProducedFileGetter.getLemmatizedWikipediaFile(i);
+			FileOutputStream dest = new FileOutputStream(outputfile);
+			ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
+			out.putNextEntry(new ZipEntry("somearticles"));
+			
+			
 			BufferedReader in = new BufferedReader(new FileReader(f));
 			
 			String documenttext;
@@ -82,9 +84,11 @@ public class WriteLemmatizedWikipediaArticlesFile
 		    	}
 		    	out.write("\n".getBytes());	//Print a blank line at the end of the article.
 			}
+			out.closeEntry();
+			out.close();
+			
 			in.close();
 		}
-		out.close();
 	}
 
 	

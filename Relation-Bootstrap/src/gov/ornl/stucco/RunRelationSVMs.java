@@ -34,11 +34,12 @@ public class RunRelationSVMs
 	
 	private static double[] cs = { 100., 1000., 10000., 100000};
 	private static double[] gammas = { .001, .01, .1, 1., 10., 100. };
+	private static String[] kerneltypes = {"Linear", "RBF"};
 	
 	
 	private static String entityextractedfilename;
 	private static String contexts;
-	private static String kerneltype;
+	
 	
 	//private static int folds = 5;
 	//This is the number of folds we use for cross validation.  The null at the end handles the real world case where we want to use all the training data possible.  This is kind of an ugly solution, but not as ugly as some of the alternatives for solving this problem.
@@ -72,7 +73,7 @@ public class RunRelationSVMs
 				continue;
 			
 			
-			PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getResultsFile(kerneltype, entityextractedfilename, contexts, relationtype)));
+			PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getResultsFile(entityextractedfilename, contexts, relationtype)));
 			
 			//In order to do cross-validation, we need to set aside two folds for tuning parameters and testing.  So testfold1 and testfold2 will be those folds.  All the other folds can be used for training.
 			for(int t1index = 0; t1index < folds.length; t1index++)
@@ -96,57 +97,61 @@ public class RunRelationSVMs
 						
 					
 					//Our SVMs have two parameters, c and gamma.  Iterate over all combinations of them so that we can do a grid search. (Gamma is not needed for linear kernels, so we set the gammas array to have only one value in readArgs() if the kernel type chosen was Linear).
-					for(double c : cs)
+					for(String kerneltype : kerneltypes)
 					{
-						for(double gamma : gammas)
+						for(double c : cs)
 						{
-							File modelfile = ProducedFileGetter.getSVMModelFile(kerneltype, entityextractedfilename, contexts, relationtype, testfold1, testfold2, c, gamma);
-							
-							String line;
-							if(!modelfile.exists() || alwaysretrain)
+							for(double gamma : gammas)
 							{
-								String[] trainarray = null;
-								if(kerneltype.equals("Linear"))
-									trainarray = new String[]{"java", "-cp", libsvmjar.getAbsolutePath(), "svm_train", "-s", "0", "-t", "0", "-c", "" + c, trainingfile.getAbsolutePath(), modelfile.getAbsolutePath()};
-								else if(kerneltype.equals("RBF"))
-									trainarray = new String[]{"java", "-cp", libsvmjar.getAbsolutePath(), "svm_train", "-s", "0", "-t", "2", "-c", "" + c, "-g", "" + gamma, trainingfile.getAbsolutePath(), modelfile.getAbsolutePath()};
+								File modelfile = ProducedFileGetter.getSVMModelFile(kerneltype, entityextractedfilename, contexts, relationtype, testfold1, testfold2, c, gamma);
+							
+								String line;
+								if(!modelfile.exists() || alwaysretrain)
+								{
+									String[] trainarray = null;
+									if(kerneltype.equals("Linear"))
+										trainarray = new String[]{"java", "-cp", libsvmjar.getAbsolutePath(), "svm_train", "-s", "0", "-t", "0", "-c", "" + c, trainingfile.getAbsolutePath(), modelfile.getAbsolutePath()};
+									else if(kerneltype.equals("RBF"))
+										trainarray = new String[]{"java", "-cp", libsvmjar.getAbsolutePath(), "svm_train", "-s", "0", "-t", "2", "-c", "" + c, "-g", "" + gamma, trainingfile.getAbsolutePath(), modelfile.getAbsolutePath()};
 								
 
-								Process process = (new ProcessBuilder(trainarray)).start();
-								BufferedReader br = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+									Process process = (new ProcessBuilder(trainarray)).start();
+									BufferedReader br = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+									while ((line = br.readLine()) != null)
+										System.out.println(line);
+									process.waitFor();
+								}
+							
+							
+								//Apply the model to test instances
+								String[] t1array = {"java", "-cp",  libsvmjar.getAbsolutePath(), "svm_predict", testfile1.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile1.getAbsolutePath()};
+								Process t1process = (new ProcessBuilder(t1array)).start();
+								BufferedReader br = new BufferedReader(new InputStreamReader(t1process.getErrorStream()));
 								while ((line = br.readLine()) != null)
 									System.out.println(line);
-								process.waitFor();
-							}
+								t1process.waitFor();
+							
+								//And print the resulting classified instances to a result file.
+								printResultsFile(testfold1 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + contexts, testresultsout, testfile1, testfile1comments, testpredictionsfile1);
 							
 							
-							//Apply the model to test instances
-							String[] t1array = {"java", "-cp",  libsvmjar.getAbsolutePath(), "svm_predict", testfile1.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile1.getAbsolutePath()};
-							Process t1process = (new ProcessBuilder(t1array)).start();
-							BufferedReader br = new BufferedReader(new InputStreamReader(t1process.getErrorStream()));
-							while ((line = br.readLine()) != null)
-								System.out.println(line);
-							t1process.waitFor();
-							
-							//And print the resulting classified instances to a result file.
-							printResultsFile(testfold1 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + contexts, testresultsout, testfile1, testfile1comments, testpredictionsfile1);
-							
-							
-							//Recall that we left two folds out of the training set.  If those two folds are not the same, also apply the model to and print the results from the other fold.
-							if(testfold1 != testfold2 && (testfold1 != null & testfold2 != null))
-							{
-								String[] t2array = {"java", "-cp", libsvmjar.getAbsolutePath(), "svm_predict", testfile2.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile2.getAbsolutePath()};
-								Process t2process = (new ProcessBuilder(t2array)).start();
-								br = new BufferedReader(new InputStreamReader(t2process.getErrorStream()));
-								while ((line = br.readLine()) != null)
-									System.out.println(line);
-								t2process.waitFor();
+								//Recall that we left two folds out of the training set.  If those two folds are not the same, also apply the model to and print the results from the other fold.
+								if(testfold1 != testfold2 && (testfold1 != null & testfold2 != null))
+								{
+									String[] t2array = {"java", "-cp", libsvmjar.getAbsolutePath(), "svm_predict", testfile2.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile2.getAbsolutePath()};
+									Process t2process = (new ProcessBuilder(t2array)).start();
+									br = new BufferedReader(new InputStreamReader(t2process.getErrorStream()));
+									while ((line = br.readLine()) != null)
+										System.out.println(line);
+									t2process.waitFor();
 								
-								printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + contexts, testresultsout, testfile2, testfile2comments, testpredictionsfile2);
-							}
+									printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + contexts, testresultsout, testfile2, testfile2comments, testpredictionsfile2);
+								}
 							
-							if(!(testfold1 == null && testfold2 == null))
-								modelfile.delete();
+								//We only care about the predictions in most cases.  We need to save the model only when we are training on the entire dataset because that model may be used to make real predictions for stucco.
+								if(!(testfold1 == null && testfold2 == null))
+									modelfile.delete();
+							}
 						}
 					}
 				}
@@ -191,17 +196,17 @@ public class RunRelationSVMs
 			System.exit(3);
 		}
 		
-		kerneltype = args[2];
-		if( !(kerneltype.equals("RBF") || kerneltype.equals("Linear")) )
-		{
-			System.err.println("Error, invalid kernel type.  Kerneltype must be RBF or Linear.");
-			System.exit(3);
-		}
-		else if(kerneltype.equals("Linear"))	//Linear kernels do not have a gamma parameter, so reset the gammas array to have only one value to reduce redundant processing.
-		{
-			double[] holder = { 0. };
-			gammas = holder;
-		}
+		//kerneltype = args[2];
+		//if( !(kerneltype.equals("RBF") || kerneltype.equals("Linear")) )
+		//{
+		//	System.err.println("Error, invalid kernel type.  Kerneltype must be RBF or Linear.");
+		//	System.exit(3);
+		//}
+		//else if(kerneltype.equals("Linear"))	//Linear kernels do not have a gamma parameter, so reset the gammas array to have only one value to reduce redundant processing.
+		//{
+		//	double[] holder = { 0. };
+		//	gammas = holder;
+		//}
 	}
 	
 	

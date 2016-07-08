@@ -13,9 +13,13 @@
 
 package gov.ornl.stucco;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -46,9 +50,21 @@ public class PrintPreprocessedDocuments
 	{
 		//Open printwriters for each of the three text file types mentioned at the beginning of this .java file.  We get all
 		//files from ProducedFileGetter to help maintain consistency between locations used by different programs.
-		PrintWriter aliassubstitutednamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("aliasreplaced")));
-		PrintWriter completelyreplacednamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("entityreplaced")));
-		PrintWriter originalnamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("original")));
+		//PrintWriter aliassubstitutednamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("aliasreplaced")));
+		//PrintWriter completelyreplacednamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("entityreplaced")));
+		//PrintWriter originalnamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("original")));
+		
+		//Since there may be issues with sharing files as big as these might turn out to be through github, we are zipping them instead of just writing them in plain text format.
+		ZipOutputStream aliassubstitutednamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("aliasreplaced"))));
+		aliassubstitutednamesout.putNextEntry(new ZipEntry("data"));
+
+		ZipOutputStream completelyreplacednamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("entityreplaced"))));
+		completelyreplacednamesout.putNextEntry(new ZipEntry("data"));
+
+		ZipOutputStream originalnamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("original"))));
+		originalnamesout.putNextEntry(new ZipEntry("data"));
+		
+		
 		
 		
 		//Process each serialized file.
@@ -110,7 +126,7 @@ public class PrintPreprocessedDocuments
 				 			}
 				 			originalentitystring = originalentitystring.trim();
 				 			originalentitystring = "[" + entitytypestring + "_" + originalentitystring.replaceAll(" ", "_") + "]";
-				 			originalnamesout.print(originalentitystring + " ");
+				 			originalnamesout.write((originalentitystring + " ").getBytes());
 				 			
 				 			//Print the alias replaced version of the text as described above.
 				 			String aliasreplacedentitystring = "";
@@ -123,10 +139,10 @@ public class PrintPreprocessedDocuments
 				 			aliasreplacedentitystring = aliasreplacedentitystring.trim();
 				 			aliasreplacedentitystring = CyberEntityText.getCanonicalName(aliasreplacedentitystring, currententitystate);
 				 			aliasreplacedentitystring = "[" + entitytypestring + "_" + aliasreplacedentitystring.replaceAll(" ", "_") + "]";
-				 			aliassubstitutednamesout.print(aliasreplacedentitystring + " ");
+				 			aliassubstitutednamesout.write((aliasreplacedentitystring + " ").getBytes());
 				 			
 				 			//Replace the entity's text with its type.
-				 			completelyreplacednamesout.print("[" + entitytypestring + "] ");
+				 			completelyreplacednamesout.write(("[" + entitytypestring + "] ").getBytes());
 				 		}
 			 			
 			 			currententitystate = entityfinaltype;
@@ -136,9 +152,9 @@ public class PrintPreprocessedDocuments
 			 		//If the current token was not labeled as any kind of cyber entity, just print it ('s lemma) out.
 			 		if(entityfinaltype == CyberEntityText.O)
 			 		{
-			 			aliassubstitutednamesout.print( ((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ");
-			 			completelyreplacednamesout.print( ((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ");
-			 			originalnamesout.print( ((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ");
+			 			aliassubstitutednamesout.write( (((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ").getBytes());
+			 			completelyreplacednamesout.write( (((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ").getBytes());
+			 			originalnamesout.write( (((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ").getBytes());
 			 		}
 			 	}
 			 	
@@ -158,7 +174,7 @@ public class PrintPreprocessedDocuments
 		 			}
 		 			originalentitystring = originalentitystring.trim();
 		 			originalentitystring = "[" + entitytypestring + "_" + originalentitystring.replaceAll(" ", "_") + "]";
-		 			originalnamesout.print(originalentitystring + " ");
+		 			originalnamesout.write((originalentitystring + " ").getBytes());
 		 			
 		 			//Replace the entity with its main alias if available.
 		 			String aliasreplacedentitystring = "";
@@ -171,24 +187,27 @@ public class PrintPreprocessedDocuments
 		 			aliasreplacedentitystring = aliasreplacedentitystring.trim();
 		 			aliasreplacedentitystring = CyberEntityText.getCanonicalName(aliasreplacedentitystring, currententitystate);
 		 			aliasreplacedentitystring = "[" + entitytypestring + "_" + aliasreplacedentitystring.replaceAll(" ", "_") + "]";
-		 			aliassubstitutednamesout.print(aliasreplacedentitystring + " ");
+		 			aliassubstitutednamesout.write((aliasreplacedentitystring + " ").getBytes());
 		 			
 		 			//Completely replace the entity with the name of its type.
-		 			completelyreplacednamesout.print("[" + entitytypestring + "] ");
+		 			completelyreplacednamesout.write(("[" + entitytypestring + "] ").getBytes());
 		 		}
 		 		
-		 		aliassubstitutednamesout.println();
-		 		completelyreplacednamesout.println();
-		 		originalnamesout.println();
+		 		aliassubstitutednamesout.write("\n".getBytes());
+		 		completelyreplacednamesout.write("\n".getBytes());
+		 		originalnamesout.write("\n".getBytes());
 			}
 			
-			aliassubstitutednamesout.println();
-			completelyreplacednamesout.println();
-			originalnamesout.println();
+			aliassubstitutednamesout.write("\n".getBytes());
+			completelyreplacednamesout.write("\n".getBytes());
+			originalnamesout.write("\n".getBytes());
 		}
 
+		aliassubstitutednamesout.closeEntry();
 		aliassubstitutednamesout.close();
+		completelyreplacednamesout.closeEntry();
 		completelyreplacednamesout.close();
+		originalnamesout.closeEntry();
 		originalnamesout.close();
 	}
 	

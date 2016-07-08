@@ -44,7 +44,7 @@ public class ProducedFileGetter
 		File dir = new File(shareddirectory, "entityextractedtext/");
 		dir.mkdirs();
 		
-		return new File(dir, filename);
+		return new File(dir, filename + ".zip");
 	}
 	
 	//SVM training files
@@ -64,12 +64,12 @@ public class ProducedFileGetter
 	
 	
 	//This file contains predictions made by an SVM.
-	public static File getResultsFile(String kerneltype, String entityextractedfilename, String contexts, int relationshiptype)
+	public static File getResultsFile(String entityextractedfilename, String contexts, int relationshiptype)
 	{
 		File dir = new File(shareddirectory, "resultfiles/");
 		dir.mkdirs();
 		
-		String filename = "Results." + kerneltype + "." + entityextractedfilename + "." + contexts + "." + relationshiptype;
+		String filename = "Results." + entityextractedfilename + "." + contexts + "." + relationshiptype;
 		
 		return new File(dir, filename);
 	}
@@ -119,9 +119,9 @@ public class ProducedFileGetter
 	}
 	
 	
-	public static File getLemmatizedWikipediaFile()
+	public static File getLemmatizedWikipediaFile(int filenum)
 	{
-		File result = new File(shareddirectory, "WikipediaLemmatized/wikipedialemmatized.zip");
+		File result = new File(shareddirectory, "WikipediaLemmatized/wikipedialemmatized" + filenum + ".zip");
 		result.getParentFile().mkdirs();
 		
 		return result;

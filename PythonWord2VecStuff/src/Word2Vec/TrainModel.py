@@ -24,7 +24,8 @@ path_to_java_shared_directory = os.path.abspath(os.path.join(os.getcwd(), "..", 
 #preprocessedfile = '/Users/p5r/stuccovm/preprocesseddata/aliassubstitutedentitynamesprocesseddocuments'
 #entity_extracted_filename = 'aliasreplaced'
 entity_extracted_filename = sys.argv[1]
-preprocessedfile = os.path.join(path_to_java_shared_directory, 'entityextractedtext', entity_extracted_filename)
+preprocessedfile = os.path.join(path_to_java_shared_directory, 'entityextractedtext', entity_extracted_filename + ".zip")
+wikilemmatizeddir = os.path.join(path_to_java_shared_directory, 'WikipediaLemmatized')
 
 #These are the files this program can produce.  
 #This file is the actual word2vec model.  But since we don't use the model for anything, I commented out everything having to do with writing it.
@@ -41,11 +42,11 @@ wordvectorsfile = os.path.join(path_to_java_shared_directory, 'models', word_vec
 hiddenlayersize = 100
 windowsize = 5 #maximum distance between words looked at during training.
 skipgramorbow = 1 #1 for skip gram.  0 for continuous bag of words.
-wordoccurrencethreshold = 1 #If a word occurs at least this number of times in our dataset, include it in our vocabulary.
+wordoccurrencethreshold = 5 #If a word occurs at least this number of times in our dataset, include it in our vocabulary.
 
 
 #Get the corpus sentences to train on.  sentences is actually an iterator, so we do not have to worry about trying to store it in its entirety in memory.
-sentences = SentenceIterator(preprocessedfile) # a memory-friendly iterator
+sentences = SentenceIterator(preprocessedfile, wikilemmatizeddir, wordoccurrencethreshold) # a memory-friendly iterator
 
 
 #Train the model.

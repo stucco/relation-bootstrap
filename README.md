@@ -9,12 +9,6 @@ We assume that cyber entity extracted versions of the documents have already bee
 
 #### Place the entity extracted, serialized documents (.ser.gz files) in the directory *relation-bootstrap/producedfiles/entityextractedserialized/* .
 
----
-
-<br>
-
-
-####Place decompressed xml files in 
 
 ---
 
@@ -62,12 +56,11 @@ This program takes the output of the previous two programs to write a lot of dat
 
 #### Run this program:
 
-	RunRelationSVMs preprocessedtype contexts kerneltype
+	RunRelationSVMs preprocessedtype contexts
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	contexts = 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111
-	kerneltype = RBF | Linear
 
-This program takes the instance data written by the previous program, trains a SVM on it, and applies the SVM to a test set.  So it will not run properly unless WriteRelationInstanceFiles has been run using the same preprocessedtype and contexts parameters.  kerneltype refers to the type of kernel used in the SVM.
+This program takes the instance data written by the previous program, trains a SVM on it, and applies the SVM to a test set.  So it will not run properly unless WriteRelationInstanceFiles has been run using the same preprocessedtype and contexts parameters.
 
 

@@ -13,10 +13,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 
 public class WriteRelationInstanceFiles
 {
@@ -88,13 +92,22 @@ public class WriteRelationInstanceFiles
 		try
 		{
 			//Read the appropriate text file chosen as a command line argument.
-			BufferedReader in = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText(entityextractedfilename)));
+			//BufferedReader in = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText(entityextractedfilename)));
+
+			//We are switching to using zip files for these because they could potentially be very big.
+			ZipFile zipfile = new ZipFile(ProducedFileGetter.getEntityExtractedText(entityextractedfilename));
+			ZipEntry entry = zipfile.entries().nextElement();
+		    BufferedReader in = new BufferedReader(new InputStreamReader(zipfile.getInputStream(entry)));
+	
+		
+			//The original text should align exactly, token-for-token, with either of the other two text types.
+			//BufferedReader aliasalignedin = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText("original")));
 			
-			//The alias replaced text should align exactly, token-for-token, with either of the other two text types.
-			//And its entity names are easiest to map to known entities, which is important because we are determining
-			//which instances are positive and which are negative based on relationships we have extracted about known
-			//entities.
-			BufferedReader aliasalignedin = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText("aliasreplaced")));
+		    //We are switching to using zip files for these because they could potentially be very big.
+			ZipFile zipfile2 = new ZipFile(ProducedFileGetter.getEntityExtractedText("original"));
+			ZipEntry entry2 = zipfile2.entries().nextElement();
+			BufferedReader originalalignedin = new BufferedReader(new InputStreamReader(zipfile2.getInputStream(entry2)));
+			
 			
 			int linecounter = 0;	//Keep track of the number of the line we are on in the file.  We'll make a note of what line our instances come from in this way.
 			
@@ -105,7 +118,7 @@ public class WriteRelationInstanceFiles
 			while((line = in.readLine()) != null)
 			{
 				//Read the corresponding line from the alias replaced text file.
-				String aliasedline = aliasalignedin.readLine();
+				String aliasedline = originalalignedin.readLine();
 				
 				
 				linecounter++;
@@ -241,7 +254,9 @@ public class WriteRelationInstanceFiles
 				}
 			}
 			in.close();
-			aliasalignedin.close();
+			originalalignedin.close();
+			zipfile.close();
+			zipfile2.close();
 		}catch(IOException e)
 		{
 			System.out.println(e);

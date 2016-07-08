@@ -2,9 +2,13 @@ package gov.ornl.stucco.Test;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
@@ -40,9 +44,11 @@ import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberEntityMentionsAnnotation
 public class Test 
 {
 	
-	public static void main(String[] args)
+	public static void main(String[] args) throws Exception
 	{
-		testCurrentWorkingDirectory();
+		testZipReadingAndWriting();
+		
+		//testCurrentWorkingDirectory();
 		
 		//findNearestWords();
 		
@@ -203,6 +209,7 @@ public class Test
         return aliasToallaliases;
 	}
 
+
 	private static void readEntityExtractedFiles()
 	{
 		File entityextracteddirectory = new File("/Users/p5r/stuccovm/preprocesseddata");
@@ -269,36 +276,6 @@ public class Test
 			 		
 			 		if(entityfinaltype == CyberEntityText.O)
 			 			out.print( ((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ");
-			 		
-			 		
-			 		
-			 		/*
-			 		 	//Some code I borrowed from elsewhere for handling these annotations.
-			 		 	 * 
-			 			System.out.println(token.get(TextAnnotation.class) + "\t" + token.get(CyberAnnotation.class) + "\t" + token.get(CyberHeuristicAnnotation.class));
-
-			 			if (token.containsKey(CyberHeuristicMethodAnnotation.class))
-			 			{
-			 				System.out.println("\t" + token.get(CyberHeuristicMethodAnnotation.class));
-			 			
-			 				if (token.containsKey(CyberConfidenceAnnotation.class)) 
-			 				{
-			 					double[] probabilities = token.get(CyberConfidenceAnnotation.class);
-			 					for (int i=0; i<probabilities.length; i++) 
-			 						System.out.print(probabilities[i] + ", ");
-			 			
-			 					System.out.println();
-			 				}
-			 			
-			 			System.out.println("Entities:\n" + sentence.get(CyberEntityMentionsAnnotation.class));
-			 			
-			 			System.out.println("Parse Tree:\n" + sentence.get(TreeAnnotation.class));		
-			 			String docDir = "/stucco/docs/";
-			 			File dir = new File(docDir);
-			 			if (!dir.exists()) 
-			 				dir.mkdir();
-			 			}
-			 		*/
 			 	}
 			 	
 			 	//If the sentence ends on an entity, print the entity.
@@ -324,7 +301,8 @@ public class Test
 			out.println();
 		}
 	}
-	
+
+
 	private static void testLoadingFix()
 	{
 		CyberEntityText a = new CyberEntityText("microsoft", CyberEntityText.SWVENDOR);
@@ -338,7 +316,7 @@ public class Test
 		
 		System.out.println(relationship.isKnownRelationship());
 	}
-
+	
 	private static void checkWorkingDirectories()
 	{
 		System.out.println(System.getProperty("user.dir"));
@@ -360,7 +338,7 @@ public class Test
 		for(ObjectRank or : rankedwords)
 			System.out.println(or.obj + "\t" + or.value);
 	}
-
+	
 	private static void testCurrentWorkingDirectory()
 	{
 		String currentdirectorypath = System.getProperty("user.dir");
@@ -368,4 +346,42 @@ public class Test
 		System.out.println(currentdirectorypath);
 	}
 
+	private static void testZipReadingAndWriting() throws FileNotFoundException, IOException
+	{
+		String document = "This is a\ntest document to see\nif we can read\nzip files.\n";
+		
+		
+		
+		//File outputfile = ProducedFileGetter.getTemporaryFile("tmp");
+		File outputfile = new File("tmp.zip");
+		
+		
+		
+		FileOutputStream dest = new FileOutputStream(outputfile);
+		ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
+		
+		out.putNextEntry(new ZipEntry("somefilename"));
+		out.write(document.getBytes());
+		out.closeEntry();
+		
+		out.close();
+		dest.close();
+		
+		
+		
+		ZipFile zipfile = new ZipFile(outputfile);
+	    Enumeration<? extends ZipEntry> entries = zipfile.entries();
+	    while(entries.hasMoreElements())
+	    {
+	        ZipEntry entry = entries.nextElement();
+	        BufferedReader in = new BufferedReader(new InputStreamReader(zipfile.getInputStream(entry)));
+	        
+	        String line;
+	        while((line = in.readLine()) != null)
+	        	System.out.println(line);
+	        in.close();
+	    }
+	    zipfile.close();
+	}
+	
 }
