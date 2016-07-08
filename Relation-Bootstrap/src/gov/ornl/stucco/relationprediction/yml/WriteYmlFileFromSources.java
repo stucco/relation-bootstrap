@@ -46,7 +46,7 @@ public class WriteYmlFileFromSources
 		
 		writeSources(out, ymlfileentries);
 		
-		printYmlFileEnding(out);
+		//printYmlFileEnding(out);
 		
 		out.close();
 	}
@@ -69,15 +69,15 @@ public class WriteYmlFileFromSources
 				+ "\n      host: localhost"
 				+ "\n      port: 8118"
 				+ "\n"
-				+ "\n  production:"
-				+ "\n	 collectors:");
+				+ "\n  demo:"
+				+ "\n    collectors:");
 	}
 	
 	private static void printYmlFileEnding(PrintWriter out) throws IOException
 	{
 		out.println("vagrant:"
-			+ "\n	rabbitmq:"
-			+ "\n	host: localhost");
+			+ "\n  rabbitmq:"
+			+ "\n  host: localhost");
 	}
 	
 	
@@ -157,7 +157,7 @@ public class WriteYmlFileFromSources
 		{
 			if(entry.isWorkingType())
 			{
-				out.println("      -");
+				out.println("        -");
 				out.println(entry.toYmlString());
 				counter++;
 			}
