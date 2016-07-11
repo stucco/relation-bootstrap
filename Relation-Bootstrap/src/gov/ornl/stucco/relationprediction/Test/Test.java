@@ -30,6 +30,7 @@ import gov.ornl.stucco.heurstics.utils.TokenCyberLabelMap;
 import gov.ornl.stucco.relationprediction.CyberEntityText;
 import gov.ornl.stucco.relationprediction.GenericCyberEntityTextRelationship;
 import gov.ornl.stucco.relationprediction.ObjectRank;
+import gov.ornl.stucco.relationprediction.ProducedFileGetter;
 import gov.ornl.stucco.relationprediction.WordToVectorMap;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberConfidenceAnnotation;
@@ -339,11 +340,16 @@ public class Test
 			System.out.println(or.obj + "\t" + or.value);
 	}
 	
-	private static void testCurrentWorkingDirectory()
+	private static void testCurrentWorkingDirectory() throws Exception
 	{
-		String currentdirectorypath = System.getProperty("user.dir");
+		String userdir = System.getProperty("user.dir");
+		System.out.println("user.dir\t" + userdir);
+
+		String userhome = System.getProperty("user.home");
+		System.out.println("user.home\t" + userhome);
 		
-		System.out.println(currentdirectorypath);
+		File thing = new File(Test.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+		System.out.println("thing\t" + thing.getAbsolutePath());
 	}
 
 	private static void testZipReadingAndWriting() throws FileNotFoundException, IOException

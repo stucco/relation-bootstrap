@@ -20,9 +20,10 @@ public class ProducedFileGetter
 	private static File shareddirectory;
 	static
 	{
-		String currentdirectorypath = System.getProperty("user.dir");
+		//String currentdirectorypath = System.getProperty("user.dir");
+		String currentdirectorypath = System.getProperty("user.home");	//Get the user's home directory instead of their current working directory.
 		File currentdirectory = new File(currentdirectorypath);
-		shareddirectory = new File(currentdirectory.getParent(), "producedfiles/");
+		shareddirectory = new File(currentdirectory.getParent(), "RelationExtractionProducedFiles/");
 	}
 	
 	
