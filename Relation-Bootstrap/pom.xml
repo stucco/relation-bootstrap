@@ -34,6 +34,13 @@
     </plugins>
   </build>
   <dependencies>
+    <dependency>
+        <groupId>gov.ornl.stucco</groupId>
+        <artifactId>entity-extractor</artifactId>
+        <version>1.0.0</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/lib/entity-extractor-bootstrap.jar</systemPath>
+    </dependency>
   	<dependency>
   		<groupId>edu.stanford.nlp</groupId>
   		<artifactId>stanford-corenlp</artifactId>
