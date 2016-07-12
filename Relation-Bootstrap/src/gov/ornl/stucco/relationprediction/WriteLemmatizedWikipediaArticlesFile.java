@@ -50,6 +50,7 @@ public class WriteLemmatizedWikipediaArticlesFile
 		
 		long articlecounter = 0;
 		int outputfilescounter = 0;
+		long sentencecounter = 0;
 		File outputfile;
 		FileOutputStream dest;
 		ZipOutputStream out = null;
@@ -91,12 +92,22 @@ public class WriteLemmatizedWikipediaArticlesFile
 		    	List<CoreMap> sentences = document.get(SentencesAnnotation.class);
 		    	for(CoreMap sentence: sentences) 
 		    	{
-		    		for (CoreLabel token: sentence.get(TokensAnnotation.class)) 
+		    		List<CoreLabel> tokens = sentence.get(TokensAnnotation.class);
+		    		
+		    		//There is some stuff in our articles having a second character of : (e.g. "file : Elitch Gardens Logo.png")
+		    		//that are not sentences, so ignore these.  Also ignore 1 word sentences while we're at it because they
+		    		//cannot affect the model.
+		    		if(tokens.size() < 2 || tokens.get(1).get(LemmaAnnotation.class).equals(":"))
+						continue;
+		    		
+		    		sentencecounter++;
+						
+		    		for (CoreLabel token: tokens) 
 		    		{
 		    			//This is the token's lemma.
 		    			String lemma = token.get(LemmaAnnotation.class);
 		    			
-		    			out.write((lemma + " ").getBytes());
+		    			out.write((lemma.toLowerCase() + " ").getBytes());
 		    		}
 		    		out.write("\n".getBytes());	//Get ready to start the next sentence on a new line.
 		    	}
@@ -110,6 +121,7 @@ public class WriteLemmatizedWikipediaArticlesFile
 		
 		
 		System.out.println("Total Articles: " + articlecounter);
+		System.out.println("Total Sentences: " + sentencecounter);
 	}
 
 	
