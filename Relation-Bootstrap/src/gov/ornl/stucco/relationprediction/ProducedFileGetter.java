@@ -140,7 +140,7 @@ public class ProducedFileGetter
 	}
 	
 	
-	public static File getLemmatizedWikipediaFile(int filenum)
+	public static File getLemmatizedWikipediaFile(long filenum)
 	{
 		File result = new File(producedfilesdirectory, "WikipediaLemmatized/wikipedialemmatized" + filenum + ".zip");
 		result.getParentFile().mkdirs();

@@ -34,6 +34,8 @@ public class WriteLemmatizedWikipediaArticlesFile
 	//Directory on processing virtual machine containing wikipedia articles that have been extracted using Wikipedia Extractor (https://github.com/bwbaugh/wikipedia-extractor)
 	private static File wikiarticlesdirectory = new File("/data/p5r/extracted/AA");
 
+	private static long articlesperfile = 100000;
+	
 	
 	public static void main(String[] args) throws IOException
 	{	
@@ -46,23 +48,39 @@ public class WriteLemmatizedWikipediaArticlesFile
 		edu.stanford.nlp.pipeline.StanfordCoreNLP pipeline = new edu.stanford.nlp.pipeline.StanfordCoreNLP(props);
 	
 		
+		long articlecounter = 0;
+		int outputfilescounter = 0;
+		File outputfile;
+		FileOutputStream dest;
+		ZipOutputStream out = null;
+		
+		
+		
 		File[] wikiarticles = wikiarticlesdirectory.listFiles();
 		for(int i = 0; i < wikiarticles.length; i++)
 		{
 			File f = wikiarticles[i];
-			
-
-			File outputfile = ProducedFileGetter.getLemmatizedWikipediaFile(i);
-			FileOutputStream dest = new FileOutputStream(outputfile);
-			ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
-			out.putNextEntry(new ZipEntry("somearticles"));
-			
-			
+		
 			BufferedReader in = new BufferedReader(new FileReader(f));
 			
 			String documenttext;
 			while((documenttext = readNextDocumentText(in)) != null)
 			{
+				if(articlecounter++ % articlesperfile == 0)
+				{
+					if(out != null)
+					{
+						out.closeEntry();
+						out.close();
+					}
+					
+					outputfile = ProducedFileGetter.getLemmatizedWikipediaFile(++outputfilescounter);
+					dest = new FileOutputStream(outputfile);
+					out = new ZipOutputStream(new BufferedOutputStream(dest));
+					out.putNextEntry(new ZipEntry("somearticles"));
+				}
+				
+				
 				// create an empty Annotation just with the given text
 		    	Annotation document = new Annotation(documenttext);
 		    	
@@ -84,11 +102,14 @@ public class WriteLemmatizedWikipediaArticlesFile
 		    	}
 		    	out.write("\n".getBytes());	//Print a blank line at the end of the article.
 			}
-			out.closeEntry();
-			out.close();
 			
 			in.close();
 		}
+		out.closeEntry();
+		out.close();
+		
+		
+		System.out.println("Total Articles: " + articlecounter);
 	}
 
 	
