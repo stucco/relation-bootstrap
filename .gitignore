@@ -1,5 +1,4 @@
-producedfiles/
-nvdcve-*.xml
+ProducedFiles/
 data*
 target/
 bin/

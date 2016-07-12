@@ -22,7 +22,7 @@ import org.xml.sax.SAXException;
 public class GenericCyberEntityTextRelationship 
 {
 	//This is the directory containing the nvd xml dumps.
-	private static File nvdxmldir = new File("src/nvdxml/");	//Location where xml dumps from NVD can be found.  Downloaded from https://nvd.nist.gov/download.cfm
+	//private static File nvdxmldir = new File("src/nvdxml/");	//Location where xml dumps from NVD can be found.  Downloaded from https://nvd.nist.gov/download.cfm
 	
 	
 	//Each of the 24 relationshp types is associated with an int constant here.
@@ -187,7 +187,7 @@ public class GenericCyberEntityTextRelationship
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder db = dbf.newDocumentBuilder();
 		
-			for(File file : nvdxmldir.listFiles())
+			for(File file : ProducedFileGetter.getNVDXMLDir().listFiles())
 			{
 				if(!file.getName().endsWith(".zip"))
 					continue;

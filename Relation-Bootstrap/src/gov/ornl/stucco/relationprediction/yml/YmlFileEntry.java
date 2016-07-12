@@ -89,7 +89,7 @@ public class YmlFileEntry
 		return false;
 	}
 	
-	public String toYmlString()
+	public String toYmlString(int counter)
 	{
 		String result = "";
         
@@ -101,8 +101,8 @@ public class YmlFileEntry
         	result += "          post-process: unzip\n";
         result += "          source-URI: " + url + "\n";
         result += "          content-type : " + getContentType() + "\n";
-        result += "          now-collect: all\n";
-        result += "          cron: 0 40 * * * ?";
+        result += "          now-collect: none\n";
+        result += "          cron: 0 " + counter + " * * * ?";
         
         return result;
 	}

@@ -20,20 +20,14 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import gov.ornl.stucco.relationprediction.ProducedFileGetter;
+
 import java.io.FileWriter;
 
 
 public class WriteYmlFileFromSources 
 {
 	private static File outputfile = new File("/Users/p5r/stuccovm/collectors.yml");
-	private static File sourcefile; // = new File("stucco/data/data/sources.json");
-	static
-	{
-		String currentdirectorypath = System.getProperty("user.dir");
-		File currentdirectory = new File(currentdirectorypath);
-		File parentdirectory = new File(currentdirectory.getParent());
-		sourcefile = new File(parentdirectory, "data/data/sources.json");
-	}
 	
 	
 	public static void main(String[] args) throws IOException
@@ -93,7 +87,7 @@ public class WriteYmlFileFromSources
 		JSONParser parser = new JSONParser();
 		try 
 		{
-			JSONArray array = (JSONArray)parser.parse(new FileReader(sourcefile));
+			JSONArray array = (JSONArray)parser.parse(new FileReader(ProducedFileGetter.getSourcesJSONFile()));
 
 			Iterator<JSONObject> iterator = array.iterator();
 			while(iterator.hasNext())
@@ -158,7 +152,7 @@ public class WriteYmlFileFromSources
 			if(entry.isWorkingType())
 			{
 				out.println("        -");
-				out.println(entry.toYmlString());
+				out.println(entry.toYmlString(counter));
 				counter++;
 			}
 		}

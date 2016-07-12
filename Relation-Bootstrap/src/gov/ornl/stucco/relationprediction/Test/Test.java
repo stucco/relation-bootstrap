@@ -350,6 +350,12 @@ public class Test
 		
 		File thing = new File(Test.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 		System.out.println("thing\t" + thing.getAbsolutePath());
+		
+		while(!thing.getParentFile().getName().equals("relation-bootstrap"))
+			thing = thing.getParentFile();
+		thing = thing.getParentFile();
+		
+		System.out.println("thing2\t" + thing.getAbsolutePath());
 	}
 
 	private static void testZipReadingAndWriting() throws FileNotFoundException, IOException
