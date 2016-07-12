@@ -130,10 +130,17 @@ public class WriteLemmatizedWikipediaArticlesFile
 		String wholearticlestring = "";
 		
 		String line;
-		while(!(line = in.readLine()).equals("</doc>"))
+		
+		try
 		{
-			if(!line.startsWith("<doc id="))
-				wholearticlestring += line + "\n";
+			while(!(line = in.readLine()).equals("</doc>"))
+			{
+				if(!line.startsWith("<doc id="))
+					wholearticlestring += line + "\n";
+			}
+		}catch(NullPointerException e)
+		{
+			return null;
 		}
 		
 		return wholearticlestring.trim();
