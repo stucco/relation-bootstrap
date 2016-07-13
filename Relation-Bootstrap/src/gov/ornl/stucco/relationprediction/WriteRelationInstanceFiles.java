@@ -24,6 +24,8 @@ import java.util.Enumeration;
 
 public class WriteRelationInstanceFiles
 {
+	public static String[] validcontexts = {"001", "010", "011", "100", "101", "110", "111"};
+	
 	private static String entityextractedfilename;
 	private static String contexts;
 	

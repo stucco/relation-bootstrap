@@ -43,7 +43,7 @@ public class RunRelationSVMs
 	
 	//private static int folds = 5;
 	//This is the number of folds we use for cross validation.  The null at the end handles the real world case where we want to use all the training data possible.  This is kind of an ugly solution, but not as ugly as some of the alternatives for solving this problem.
-	private static Integer[] folds = {0, 1, 2, 3, 4, null};
+	public static Integer[] folds = {0, 1, 2, 3, 4, null};
 	
 	
 	public static void main(String[] args) throws IOException, InterruptedException
@@ -73,7 +73,7 @@ public class RunRelationSVMs
 				continue;
 			
 			
-			PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getResultsFile(entityextractedfilename, contexts, relationtype)));
+			PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, contexts, relationtype)));
 			
 			//In order to do cross-validation, we need to set aside two folds for tuning parameters and testing.  So testfold1 and testfold2 will be those folds.  All the other folds can be used for training.
 			for(int t1index = 0; t1index < folds.length; t1index++)

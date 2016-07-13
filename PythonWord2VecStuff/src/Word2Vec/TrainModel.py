@@ -15,6 +15,16 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 
 
 
+
+#Some parameters.  I set them to what I thought were reasonable defaults, or values we discussed.
+hiddenlayersize = 100
+windowsize = 5 #maximum distance between words looked at during training.
+skipgramorbow = 1 #1 for skip gram.  0 for continuous bag of words.
+wordoccurrencethreshold = 5 #If a word occurs at least this number of times in our dataset, include it in our vocabulary.
+repeatrelevantdocumenttimes = 100 #We want our relevant documents to have more of an impact on the model than the wikipedia articles, so feed them into the training process multiple times.  This number should be greater than wordoccurrencethreshold, or some important vocabulary may be left out.
+
+
+
 #Get the paths to a few different files we will use.  We assume that this program stays somewhere within the git project.
 #This is the directory that this file is actually located in
 programpath = os.path.dirname(os.path.realpath(__file__))
@@ -45,19 +55,11 @@ wikilemmatizeddir = os.path.join(produced_file_dir, 'WikipediaLemmatized')
 #wordvectorsfile = '/Users/p5r/stuccovm/models/wordvectors'
 word_vectors_filename = "wordvectors." + sys.argv[1]
 wordvectorsfile = os.path.join(produced_file_dir, 'Models', word_vectors_filename)
- 
-
-
-#Some parameters.  I set them to what I thought were reasonable defaults, or values we discussed.
-hiddenlayersize = 100
-windowsize = 5 #maximum distance between words looked at during training.
-skipgramorbow = 1 #1 for skip gram.  0 for continuous bag of words.
-wordoccurrencethreshold = 5 #If a word occurs at least this number of times in our dataset, include it in our vocabulary.
 
 
 
 #Get the corpus sentences to train on.  sentences is actually an iterator, so we do not have to worry about trying to store it in its entirety in memory.
-sentences = SentenceIterator(preprocessedfile, wikilemmatizeddir, wordoccurrencethreshold) # a memory-friendly iterator
+sentences = SentenceIterator(preprocessedfile, wikilemmatizeddir, repeatrelevantdocumenttimes) # a memory-friendly iterator
 
 
 

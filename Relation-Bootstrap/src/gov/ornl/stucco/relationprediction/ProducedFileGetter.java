@@ -88,17 +88,26 @@ public class ProducedFileGetter
 	
 	
 	//This file contains predictions made by an SVM.
-	public static File getResultsFile(String entityextractedfilename, String contexts, int relationshiptype)
+	public static File getPredictionsFile(String entityextractedfilename, String contexts, int relationshiptype)
 	{
-		File dir = new File(producedfilesdirectory, "ResultFiles/");
+		File dir = new File(producedfilesdirectory, "PredictionsFiles/");
 		dir.mkdirs();
 		
-		String filename = "Results." + entityextractedfilename + "." + contexts + "." + relationshiptype;
+		String filename = "Predictions." + entityextractedfilename + "." + contexts + "." + relationshiptype;
 		
 		return new File(dir, filename);
 	}
 
 	
+	public static File getResultsFile(String entityextractedfilename, int relationshiptype)
+	{
+		File dir = new File(producedfilesdirectory, "ResultsFiles/");
+		dir.mkdirs();
+		
+		String filename = "Results." + entityextractedfilename + "." + relationshiptype;
+		
+		return new File(dir, filename);
+	}
 	
 	
 	public static File getSVMModelFile(String kerneltype, String entityextractedfilename, String contexts, int relationshiptype, Integer excludedfold1, Integer excludedfold2, double c, double gamma)

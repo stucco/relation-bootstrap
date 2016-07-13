@@ -68,7 +68,7 @@ public class GenericCyberEntityTextRelationship
 	public static final int RT_VUNAME_FUNAME = 27;	//vuln.name & function.name
 	public static final int RT_VUCVE_FUNAME = 28;	//vuln.cve & function.name
 	public static final int RT_VUMS_FUNAME = 29;	//vuln.ms & function.name
-	
+
 	
 	//Each entity type is associated with an int constant in CyberEntityText, and each relationship type
 	//is associated with an int constant above.  Given the ints associated with a pair of entities, this
@@ -78,6 +78,7 @@ public class GenericCyberEntityTextRelationship
 	//if the order is reversed.  The "standard" order is arbitrary, and is defined only in this array.
 	public static final Integer[][] entity1typeToentity2typeTorelationshiptype = new Integer[CyberEntityText.ENTITYTYPECOUNT][CyberEntityText.ENTITYTYPECOUNT];
 	public static final HashSet<Integer> allrelationshiptypesset = new HashSet<Integer>();
+	public static final HashSet<Integer> allpositiverelationshiptypesset = new HashSet<Integer>();
 	static
 	{
 		entity1typeToentity2typeTorelationshiptype[CyberEntityText.SWVENDOR][CyberEntityText.SWPRODUCT] = RT_SWVENDOR_SWPRODUCT;
@@ -115,6 +116,8 @@ public class GenericCyberEntityTextRelationship
 					
 					allrelationshiptypesset.add(entity1typeToentity2typeTorelationshiptype[i][j]);
 					allrelationshiptypesset.add(-entity1typeToentity2typeTorelationshiptype[i][j]);
+					
+					allpositiverelationshiptypesset.add(Math.abs(entity1typeToentity2typeTorelationshiptype[i][j]));
 				}
 			}
 		}
@@ -1040,6 +1043,14 @@ public class GenericCyberEntityTextRelationship
 		return allrelationshiptypesset;
 	}
 
+	//A reverse relationship just has entities coming in the opposite order in the text.  We just gave these
+	//reverse relationships IDs that are -1 times the original relationship's id.
+	public static int getReverseRelationshipType(int relationshiptype)
+	{
+		return -relationshiptype;
+	}
+	
+	
 	public String toString()
 	{
 		return entities[0] + "\t" + entities[1] + "\t" + getRelationType();
