@@ -82,6 +82,13 @@ public class YmlFileEntry
 		return "text/html";
 	}
 	
+	public boolean isHtml()
+	{
+		return "text/html".equals(getContentType());
+	}
+	
+	
+	
 	public boolean isZipped()
 	{
 		if(url.endsWith(".gz") || url.endsWith(".zip"))
@@ -100,9 +107,12 @@ public class YmlFileEntry
         if(isZipped())
         	result += "          post-process: unzip\n";
         result += "          source-URI: " + url + "\n";
-        result += "          content-type : " + getContentType() + "\n";
-        result += "          now-collect: none\n";
-        result += "          cron: 0 " + counter + " * * * ?";
+        if(isHtml())
+        	result += "          post-process: removeHTML\n";
+        result += "          content-type: " + getContentType() + "\n";
+       //result += "          now-collect: none\n";
+        result += "          now-collect: new\n";
+        result += "          cron: 0 " + counter + " 0 1 * ?";
         
         return result;
 	}
