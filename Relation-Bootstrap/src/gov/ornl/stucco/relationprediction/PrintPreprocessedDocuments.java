@@ -55,6 +55,20 @@ public class PrintPreprocessedDocuments
 		readArgs(args);
 		
 		
+		//Check whether there are any available files to work with.
+		boolean foundsergz = false;
+		for(File f : ProducedFileGetter.getEntityExtractedSerializedDirectory(training).listFiles())
+		{
+			if(f.getName().endsWith(".ser.gz"))
+				foundsergz = true;
+		}
+		if(!foundsergz)
+		{
+			System.out.println("Error: No .ser.gz files found in " + ProducedFileGetter.getEntityExtractedSerializedDirectory(training).getAbsolutePath() + " .  Please place .ser.gz files that have been processed by the entity extractor here before running this program.");
+			System.exit(3);
+		}
+		
+		
 		//Open printwriters for each of the three text file types mentioned at the beginning of this .java file.  We get all
 		//files from ProducedFileGetter to help maintain consistency between locations used by different programs.
 		//PrintWriter aliassubstitutednamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("aliasreplaced")));
@@ -75,14 +89,12 @@ public class PrintPreprocessedDocuments
 		unlemmatizednamesout.putNextEntry(new ZipEntry("data"));
 		
 		
-		
-		
 		//Process each serialized file.
 		for(File f : ProducedFileGetter.getEntityExtractedSerializedDirectory(training).listFiles())
 		{
 			if(!f.getName().endsWith(".ser.gz"))
 				continue;
-				
+			
 			
 			Annotation deserDoc = EntityLabeler.deserializeAnnotatedDoc(f.getAbsolutePath());
 			List<CoreMap> sentences = deserDoc.get(SentencesAnnotation.class);
@@ -234,8 +246,11 @@ public class PrintPreprocessedDocuments
 	
 	private static void readArgs(String[] args)
 	{
-		if("training".equals(args[0]))
-			training = true;
+		for(int i = 0; i < args.length; i++)
+		{
+			if("training".equals(args[i]))
+				training = true;
+		}
 	}
 	
 	private static int resetEntityFinalTypeHeuristically(int predictedtype, CoreLabel token)
