@@ -1,8 +1,10 @@
 #This class just iterates over the lines in a file (particularly, we send it the training data file with one line per sentence) 
 #so that we do not have to store all the sentences in memory.
-
-
 import zipfile, os
+
+
+#Set this to false once we are done just checking if the program works.
+checkingifworking = True
 
 
 class SentenceIterator(object):
@@ -20,16 +22,20 @@ class SentenceIterator(object):
                 for line in f:
                     yield line.split()
                 
+            
+         
                 
-        for g in os.listdir(self.wikipedialemmatizeddir):
-            if g.endsWith(".zip"):
-                zipthing = zipfile.ZipFile(g, 'r')
-                zipinternalfilename = zipthing.namelist()[0]    #Each zip file contains only one file.
-                with zipthing.open(zipinternalfilename, 'r') as f:
-                    for line in f:
-                        yield line.split()
-        
-        
+        for dirpath, subdirs, files in os.walk(self.wikipedialemmatizeddir):
+            for x in files:
+                if x.endswith(".zip"):
+                    filepath = os.path.join(dirpath, x)
+                    zipthing = zipfile.ZipFile(filepath, 'r')
+                    zipinternalfilename = zipthing.namelist()[0]    #Each zip file contains only one file.
+                    with zipthing.open(zipinternalfilename, 'r') as f:
+                        for line in f:
+                            yield line.split()
+            if checkingifworking:
+                break
         
         
         
