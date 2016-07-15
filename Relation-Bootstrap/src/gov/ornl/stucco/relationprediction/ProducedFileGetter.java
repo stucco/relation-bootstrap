@@ -63,9 +63,11 @@ public class ProducedFileGetter
 	}
 	
 	//Known possible filenames are "original", "entityreplaced", and "aliasreplaced"
-	public static File getEntityExtractedText(String filename)
+	public static File getEntityExtractedText(String filename, boolean training)
 	{
-		File dir = new File(producedfilesdirectory, "EntityExtractedText/");
+		File dir = new File(producedfilesdirectory, "Testing/EntityExtractedText/");
+		if(training)
+			dir = new File(producedfilesdirectory, "Training/EntityExtractedText/");
 		dir.mkdirs();
 		
 		return new File(dir, filename + ".zip");
@@ -76,9 +78,11 @@ public class ProducedFileGetter
 	//getEntityExtractedText(String filename) will previously have been used to get this file for writing.
 	//contexts is a three digit code composed of 0s and 1s indicating which context windows are/were used to 
 	//generate the contents of the file.
-	public static File getRelationshipSVMInstancesFile(String entityextractedfilename, String contexts, int relationshiptype)
+	public static File getRelationshipSVMInstancesFile(String entityextractedfilename, String contexts, int relationshiptype, boolean training)
 	{
-		File dir = new File(producedfilesdirectory, "InstanceFiles/");
+		File dir = new File(producedfilesdirectory, "Testing/InstanceFiles/");
+		if(training)
+			dir = new File(producedfilesdirectory, "Training/InstanceFiles/");
 		dir.mkdirs();
 		
 		String filename = "RelationInstances." + entityextractedfilename + "." + contexts + "." + relationshiptype;
@@ -88,9 +92,11 @@ public class ProducedFileGetter
 	
 	
 	//This file contains predictions made by an SVM.
-	public static File getPredictionsFile(String entityextractedfilename, String contexts, int relationshiptype)
+	public static File getPredictionsFile(String entityextractedfilename, String contexts, int relationshiptype, boolean training)
 	{
-		File dir = new File(producedfilesdirectory, "PredictionsFiles/");
+		File dir = new File(producedfilesdirectory, "Testing/PredictionsFiles/");
+		if(training)
+			dir = new File(producedfilesdirectory, "Training/PredictionsFiles/");
 		dir.mkdirs();
 		
 		String filename = "Predictions." + entityextractedfilename + "." + contexts + "." + relationshiptype;
@@ -101,12 +107,24 @@ public class ProducedFileGetter
 	
 	public static File getResultsFile(String entityextractedfilename, int relationshiptype)
 	{
-		File dir = new File(producedfilesdirectory, "ResultsFiles/");
+		File dir = new File(producedfilesdirectory, "ExperimentalResultsFiles/");
 		dir.mkdirs();
 		
 		String filename = "Results." + entityextractedfilename + "." + relationshiptype;
 		
 		return new File(dir, filename);
+	}
+	
+	
+
+	public static File getEntityExtractedSerializedDirectory(boolean training)
+	{
+		File dir = new File(datafilesdirectory, "Testing/EntityExtractedSerialized/");
+		if(training)
+			dir = new File(datafilesdirectory, "Training/EntityExtractedSerialized/");
+		dir.mkdirs();
+		
+		return dir;
 	}
 	
 	
@@ -123,16 +141,7 @@ public class ProducedFileGetter
 		
 		return new File(dir, filename);
 	}
-	
-	
-	public static File getEntityExtractedSerializedDirectory()
-	{
-		File dir = new File(datafilesdirectory, "EntityExtractedSerialized/");
-		dir.mkdirs();
-		
-		return dir;
-	}
-	
+
 	
 	public static File getLibSVMJarFile()
 	{

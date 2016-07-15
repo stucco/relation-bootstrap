@@ -27,22 +27,41 @@ import java.io.FileWriter;
 
 public class WriteYmlFileFromSources 
 {
-	private static File outputfile = new File("/Users/p5r/stuccovm/collectors.yml");
+	private static File totaloutputfile = new File("/Users/p5r/stuccovm/collectors.yml");
+	private static File outputdir = new File("/Users/p5r/stuccovm/collectorfiles/");
+	private static String outputfilenamestem = "collectors.yml";
 	
 	
 	public static void main(String[] args) throws IOException
 	{
-		PrintWriter out = new PrintWriter(new FileWriter(outputfile));
-		
-		printYmlFileBeginning(out);
-		
 		ArrayList<YmlFileEntry> ymlfileentries = constructYmlFileEntriesFromSource();
 		
-		writeSources(out, ymlfileentries);
+		PrintWriter totalout = new PrintWriter(new FileWriter(totaloutputfile));
+		printYmlFileBeginning(totalout);
 		
-		//printYmlFileEnding(out);
+		int workingtypecounter = 0;
+		for(YmlFileEntry entry : ymlfileentries)
+		{
+			if(entry.isWorkingType())
+			{
+				File outputfile = new File(outputdir, outputfilenamestem + "." + workingtypecounter);
+			
+				PrintWriter out = new PrintWriter(new FileWriter(outputfile));
 		
-		out.close();
+				printYmlFileBeginning(out);
+			
+				writeSources(out, entry, workingtypecounter);
+				writeSources(totalout, entry, 40);
+			
+				printYmlFileEnding(out);
+		
+				out.close();
+			
+				workingtypecounter++;
+			}
+		}
+		
+		printYmlFileEnding(totalout);
 	}
 
 	
@@ -69,9 +88,8 @@ public class WriteYmlFileFromSources
 	
 	private static void printYmlFileEnding(PrintWriter out) throws IOException
 	{
-		out.println("vagrant:"
-			+ "\n  rabbitmq:"
-			+ "\n  host: localhost");
+	    out.println("    outputLog : ./demo.log");
+	    out.println("    outputDir : ./data/Receive");
 	}
 	
 	
@@ -143,21 +161,13 @@ public class WriteYmlFileFromSources
 	}
 	
 	
-	private static void writeSources(PrintWriter out, ArrayList<YmlFileEntry> entries)
+	private static void writeSources(PrintWriter out, YmlFileEntry entry, int counter)
 	{
-		int counter = 0;
-		
-		for(YmlFileEntry entry : entries)
+		if(entry.isWorkingType())
 		{
-			if(entry.isWorkingType())
-			{
-				out.println("        -");
-				out.println(entry.toYmlString(counter));
-				counter++;
-			}
+			out.println("      -");
+			out.println(entry.toYmlString(counter));
 		}
-		
-		System.out.println("Working Sources: " + counter);
 	}
 	
 }

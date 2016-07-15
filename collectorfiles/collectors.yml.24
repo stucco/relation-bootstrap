@@ -1,0 +1,28 @@
+default:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    vhost: /
+    exchange: stucco
+    queue: stucco
+    login: stucco
+    password: stucco
+    message_size_limit: 10485760
+  stucco:
+    document-service:
+      host: localhost
+      port: 8118
+
+  demo:
+    collectors:
+      -
+        type: WEB
+        data-type: unstructured
+        source-name: Tao Security Blog
+        source-URI: http://www.taosecurity.blogspot.com 
+        post-process: removeHTML
+        content-type : text/html
+        now-collect: all
+        cron: 0 24 * * * ?
+    outputLog : ./demo.log
+    outputDir : ./data/Receive

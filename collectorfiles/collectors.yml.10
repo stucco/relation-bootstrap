@@ -1,0 +1,28 @@
+default:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    vhost: /
+    exchange: stucco
+    queue: stucco
+    login: stucco
+    password: stucco
+    message_size_limit: 10485760
+  stucco:
+    document-service:
+      host: localhost
+      port: 8118
+
+  demo:
+    collectors:
+      -
+        type: RSS
+        data-type: unstructured
+        source-name: Team Cymru Research
+        source-URI: https://www.team-cymru.org/News/secnews.rss
+        post-process: removeHTML
+        content-type : text/html
+        now-collect: all
+        cron: 0 10 * * * ?
+    outputLog : ./demo.log
+    outputDir : ./data/Receive

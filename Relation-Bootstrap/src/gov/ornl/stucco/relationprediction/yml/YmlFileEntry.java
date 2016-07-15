@@ -17,7 +17,8 @@ public class YmlFileEntry
 		sourcetypeToymltype.put("Atom", "RSS");
 		sourcetypeToymltype.put("atom", "RSS");
 		sourcetypeToymltype.put("web", "WEB");
-		sourcetypeToymltype.put("file", "FILEBYLINE");
+		//sourcetypeToymltype.put("file", "FILEBYLINE");
+		sourcetypeToymltype.put("file", "WEB");
 	}
 	
 	private String name;
@@ -31,6 +32,9 @@ public class YmlFileEntry
 		name = (String)obj.get("name");
 		
 		url = (String)obj.get("url");
+		if(url.startsWith("www"))	//Some urls in the sources.json file just start with "www.".
+			url = "http://" + url;
+			
 		
 		//obj.get("location");
 		
@@ -52,10 +56,14 @@ public class YmlFileEntry
 	
 	public boolean isWorkingType()
 	{
-		if(!category.equals("news") && !category.equals("articles") && !category.equals("vendor alerts"))
-			return false;
+		return category.equals("news") || category.equals("articles") || category.equals("vendor alerts");
+
+			//vulnerabilities, malware
 		
-		return true;
+		//if(!category.equals("news") && !category.equals("articles") && !category.equals("vendor alerts"))
+		//	return false;
+		//		
+		//return true;
 	}
 	
 	public String getYmlType()
@@ -100,19 +108,19 @@ public class YmlFileEntry
 	{
 		String result = "";
         
-		result += "          type: " + getYmlType() + "\n";
-        //result += "          data-type: " + getStructuredOrUnstructured() + "\n";
-		result += "          data-type: unstructured\n";	//Kelly says we only want unstructured documents.  Also there is no extractor for structured documents running on the virtual machine.
-        result += "          source-name: " + name + "\n";
+		result += "        type: " + getYmlType() + "\n";
+        //result += "        data-type: " + getStructuredOrUnstructured() + "\n";
+		result += "        data-type: unstructured\n";	//Kelly says we only want unstructured documents.  Also there is no extractor for structured documents running on the virtual machine.
+        result += "        source-name: " + name + "\n";
         if(isZipped())
-        	result += "          post-process: unzip\n";
-        result += "          source-URI: " + url + "\n";
+        	result += "        post-process: unzip\n";
+        result += "        source-URI: " + url + "\n";
         if(isHtml())
-        	result += "          post-process: removeHTML\n";
-        result += "          content-type: " + getContentType() + "\n";
-       //result += "          now-collect: none\n";
-        result += "          now-collect: new\n";
-        result += "          cron: 0 " + counter + " 0 1 * ?";
+        	result += "        post-process: removeHTML\n";
+        result += "        content-type : " + getContentType() + "\n";
+       //result += "        now-collect: none\n";
+        result += "        now-collect: all\n";
+        result += "        cron: 0 " + counter + " * * * ?";
         
         return result;
 	}
