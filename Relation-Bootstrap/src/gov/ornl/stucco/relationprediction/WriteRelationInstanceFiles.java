@@ -27,10 +27,10 @@ public class WriteRelationInstanceFiles
 	public static String[] validcontexts = {"001", "010", "011", "100", "101", "110", "111"};
 	
 	private static String entityextractedfilename;
-	private static String contexts;
+	//private static String contexts;
 	private static boolean training = false;
 	
-	private static HashMap<Integer,PrintWriter> relationtypeToprintwriter;
+	private static HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter;
 	
 	
 	public static void main(String[] args)
@@ -45,8 +45,9 @@ public class WriteRelationInstanceFiles
 		buildAndWriteTrainingInstances(wvm);
 		
 		//Close the file streams.
-		for(PrintWriter pw : relationtypeToprintwriter.values())
-			pw.close();
+		for(HashMap<String,PrintWriter> contextToprintwriter : relationtypeTocontextToprintwriter.values())
+			for(PrintWriter pw : contextToprintwriter.values())
+				pw.close();
 	}
 	
 	//Arguments: 
@@ -59,18 +60,8 @@ public class WriteRelationInstanceFiles
 	private static void readArgs(String[] args)
 	{
 		entityextractedfilename = args[0];
-		
-		contexts = args[1];
-		if(contexts.length() != 3 || 
-				!(contexts.charAt(0) == '0' || contexts.charAt(0) == '1') ||
-				!(contexts.charAt(1) == '0' || contexts.charAt(1) == '1') ||
-				!(contexts.charAt(2) == '0' || contexts.charAt(2) == '1'))
-		{
-			System.err.println("Error, invalid context.  Context must be 000, 001, 010, 011, 100, 101, 110, or 111.");
-			System.exit(3);
-		}
-		
-		for(int i = 2; i < args.length; i++)
+
+		for(int i = 1; i < args.length; i++)
 		{
 			if("training".equals(args[i]))
 				training = true;
@@ -79,14 +70,24 @@ public class WriteRelationInstanceFiles
 	
 	private static void initializePrintWriters()
 	{
-		relationtypeToprintwriter = new HashMap<Integer,PrintWriter>();
+		relationtypeTocontextToprintwriter = new HashMap<Integer,HashMap<String,PrintWriter>>();
 		
 		try
 		{
-			for(Integer i : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
+			for(String context : validcontexts)
 			{
-				File f = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, i, training);
-				relationtypeToprintwriter.put(i, new PrintWriter(new FileWriter(f)));
+				for(Integer i : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
+				{
+					File f = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, context, i, training);
+					
+					HashMap<String,PrintWriter> contextToprintwriter = relationtypeTocontextToprintwriter.get(i);
+					if(contextToprintwriter == null)
+					{
+						contextToprintwriter = new HashMap<String,PrintWriter>();
+						relationtypeTocontextToprintwriter.put(i, contextToprintwriter);
+					}
+					contextToprintwriter.put(context, new PrintWriter(new FileWriter(f)));
+				}
 			}
 		}catch(IOException e)
 		{
@@ -194,9 +195,9 @@ public class WriteRelationInstanceFiles
 								Integer relationtype = aliasedrelationship.getRelationType();
 								
 								
-								PrintWriter pw = relationtypeToprintwriter.get(relationtype);
-								if(pw != null)
-								{
+								HashMap<String,PrintWriter> contextToprintwriter = relationtypeTocontextToprintwriter.get(relationtype);
+								if(contextToprintwriter != null)
+								{		
 									//If we do care about this relationship type, check whether
 									//we can label this relationship confidently enough to
 									//use it as a training instance.
@@ -215,59 +216,61 @@ public class WriteRelationInstanceFiles
 									////it can be used for training, so check for null.
 									//if(isknownrelationship != null)
 									//{
-										//Construct the context
-										//vectors using the tokens in the appropriate context windows and
-										//the word vectors.  Concatenate all the chosen vectors into one
-										//feature vecture which we will use to represent the instance.
-										ArrayList<Double> concatenatedvectors = new ArrayList<Double>();
 									
-										//If the user chose to use the context preceding the first entity:
-										if(contexts.charAt(0) == '1')
+										
+										//Make a list of tokens in this context, then
+										//take the average of their corresponding vectors.
+										//Add the resulting vector to the concatenatedvector we are using 
+										//for our feature representation.
+										String[] context1 = Arrays.copyOfRange(tokens, 0, i);
+										double[] context1vector = wvm.getContextVector(context1);
+										
+										//Context between the entities.
+										String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
+										double[] context2vector = wvm.getContextVector(context2);
+									
+										//Context after the entities.
+										String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
+										double[] context3vector = wvm.getContextVector(context3);
+									
+									
+										for(String context : validcontexts)
 										{
-											//Make a list of tokens in this context, then
-											//take the average of their corresponding vectors.
-											//Add the resulting vector to the concatenatedvector we are using 
-											//for our feature representation.
-											String[] context1 = Arrays.copyOfRange(tokens, 0, i);
-											double[] context1vector = wvm.getContextVector(context1);
-											for(double value : context1vector)
-												concatenatedvectors.add(value);
+											PrintWriter pw = contextToprintwriter.get(context);
+											
+
+											//Construct the context
+											//vectors using the tokens in the appropriate context windows and
+											//the word vectors.  Concatenate all the chosen vectors into one
+											//feature vecture which we will use to represent the instance.
+											ArrayList<Double> concatenatedvectors = new ArrayList<Double>();
+											if(context.charAt(0) == '1')
+												for(double value : context1vector)
+													concatenatedvectors.add(value);
+											if(context.charAt(1) == '1')
+												for(double value : context2vector)
+													concatenatedvectors.add(value);
+											if(context.charAt(2) == '1')
+												for(double value : context3vector)
+													concatenatedvectors.add(value);
+											
+											
+											//Now, actually build the SVM_light style string representation of the instance.
+											String instanceline = buildSVMLightLine(isknownrelationship, concatenatedvectors);
+										
+										
+											//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
+											//add the entity names to the end of the line.
+											if(training)
+												instanceline += " # " + linecounter;
+											else
+												instanceline += " # " + linecounter + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
+										
+										
+											//And finally, print it to the appropriate file using the PrintWriter we 
+											//made earlier.
+											pw.println(instanceline);
 										}
-									
-										//If the user chose to use the context between the two entities:
-										if(contexts.charAt(1) == '1')
-										{
-											String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
-											double[] context2vector = wvm.getContextVector(context2);
-											for(double value : context2vector)
-												concatenatedvectors.add(value);
-										}
-									
-										//If the user chose to use the context after the second entity:
-										if(contexts.charAt(2) == '1')
-										{
-											String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
-											double[] context3vector = wvm.getContextVector(context3);
-											for(double value : context3vector)
-												concatenatedvectors.add(value);
-										}
-									
-									
-										//Now, actually build the SVM_light style string representation of the instance.
-										String instanceline = buildSVMLightLine(isknownrelationship, concatenatedvectors);
-										
-										
-										//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
-										//add the entity names to the end of the line.
-										if(training)
-											instanceline += " # " + linecounter;
-										else
-											instanceline += " # " + linecounter + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
-										
-										
-										//And finally, print it to the appropriate file using the PrintWriter we 
-										//made earlier.
-										pw.println(instanceline);
 									//}
 								}
 							}

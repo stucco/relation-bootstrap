@@ -20,7 +20,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 hiddenlayersize = 100
 windowsize = 5 #maximum distance between words looked at during training.
 skipgramorbow = 1 #1 for skip gram.  0 for continuous bag of words.
-wordoccurrencethreshold = 5 #If a word occurs at least this number of times in our dataset, include it in our vocabulary.
+wordoccurrencethreshold = 100 #If a word occurs at least this number of times in our dataset, include it in our vocabulary.
 repeatrelevantdocumenttimes = 100 #We want our relevant documents to have more of an impact on the model than the wikipedia articles, so feed them into the training process multiple times.  This number should be greater than wordoccurrencethreshold, or some important vocabulary may be left out.
 
 
@@ -56,6 +56,8 @@ wikilemmatizeddir = os.path.join(data_file_dir, 'WikipediaLemmatized')
 #wordvectorsfile = '/Users/p5r/stuccovm/models/wordvectors'
 word_vectors_filename = "wordvectors." + sys.argv[1]
 wordvectorsfile = os.path.join(produced_file_dir, 'Models', word_vectors_filename)
+if not os.path.exists(os.path.dirname(wordvectorsfile)):
+    os.makedirs(os.path.dirname(wordvectorsfile))
 
 
 
@@ -72,7 +74,6 @@ model = gensim.models.Word2Vec(sentences, size=hiddenlayersize, workers=4, windo
 #Write the word vectors to a file.  
 #This is the only result we actually 
 #The gensim api does not specify if model[k] is k's in or out vector.
-os.makedirs(os.path.dirname(wordvectorsfile))
 wordvectorsfilestream = open(wordvectorsfile, 'w+')
 for (k, v) in model.vocab.iteritems():
     #print(k + "\t" + model[k])

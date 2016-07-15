@@ -49,9 +49,9 @@ public class Test
 	{
 		//testZipReadingAndWriting();
 		
-		testCurrentWorkingDirectory();
+		//testCurrentWorkingDirectory();
 		
-		//findNearestWords();
+		findNearestWords();
 		
 		//checkWorkingDirectories();
 		
@@ -333,11 +333,19 @@ public class Test
 	{
 		WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap("aliasreplaced");
 		
-		String testword = "[sw.product_flash_player]";
-		ArrayList<ObjectRank> rankedwords = wvm.findNearestWords(testword);
 		
-		for(ObjectRank or : rankedwords)
-			System.out.println(or.obj + "\t" + or.value);
+		for(String testword : wvm.keySet())
+		{
+			if(!testword.startsWith("["))
+				continue;
+				
+			ArrayList<ObjectRank> rankedwords = wvm.findNearestWords(testword);
+		
+			System.out.print(testword);
+			for(int i = 1; i < rankedwords.size() && i < 20; i++)
+				System.out.print("\t" + rankedwords.get(i).obj + "(" + rankedwords.get(i).value + ")");
+			System.out.println();
+		}
 	}
 	
 	private static void testCurrentWorkingDirectory() throws Exception

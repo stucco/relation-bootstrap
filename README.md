@@ -63,12 +63,11 @@ This program takes the output from the previous program and trains a word2vec mo
 
 #### Run this program:
 
-	WriteRelationInstanceFiles preprocessedtype contexts
+	WriteRelationInstanceFiles preprocessedtype
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
-	contexts = 001 | 010 | 011 | 100 | 101 | 110 | 111
 
-This program takes the output of the previous two programs to write a lot of data files for relationship SVM classifiers.  preprocessedtype tells the program which output files written by the previous two programs to use, and contexts tells it which feature representation to use.  More specifically, this argument tells us whether or not we want to use the context preceding the first entity (first digit), whether or not we want to use the context between entities (second digit), and whether or not we want to use the context after the second entity (third digit).  A 1 in one of these spots indicates that we do want to use the corresponding context, and a zero indicates that we don't.
+This program takes the output of the previous two programs to write a lot of data files for relationship SVM classifiers.  preprocessedtype tells the program which output files written by the previous two programs to use.
 
 
 ---
@@ -82,7 +81,8 @@ This program takes the output of the previous two programs to write a lot of dat
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	contexts = 001 | 010 | 011 | 100 | 101 | 110 | 111
 
-This program takes the instance data written by the previous program, trains a SVM on it, and applies the SVM to a test set.  So it will not run properly unless WriteRelationInstanceFiles has been run using the same preprocessedtype and contexts parameters.
+This program takes the instance data written by the previous program, trains a SVM on it, and applies the SVM to a test set.  So it will not run properly unless WriteRelationInstanceFiles has been run using the same preprocessedtype parameter.
+The contexts feature tells the program which context feature representation to use.  More specifically, this argument tells us whether or not we want to use the context preceding the first entity (first digit), whether or not we want to use the context between entities (second digit), and whether or not we want to use the context after the second entity (third digit).  A 1 in one of these spots indicates that we do want to use the corresponding context, and a zero indicates that we don't.  
 
 
 ---
