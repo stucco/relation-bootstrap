@@ -178,6 +178,9 @@ public class CyberEntityText
 			return O;
 		
 		int indexoffirstspace = token.indexOf('_');
+		if(indexoffirstspace == -1 && token.charAt(token.length()-1) == ']')
+			indexoffirstspace = token.length()-1;
+		
 		if(indexoffirstspace <= 0)
 			return O;
 		

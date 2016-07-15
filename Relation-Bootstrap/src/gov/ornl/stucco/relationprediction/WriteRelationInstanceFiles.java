@@ -168,7 +168,6 @@ public class WriteRelationInstanceFiles
 					unlemmatizedcyberentitytexts[i] = CyberEntityText.getCyberEntityTextFromToken(unlemmatizedtokens[i]);
 				}
 				
-				
 				//Now, we scan through each pair of tokens.  If both are cyber entities...
 				for(int i = 0; i < tokens.length; i++)
 				{
@@ -197,7 +196,7 @@ public class WriteRelationInstanceFiles
 								
 								HashMap<String,PrintWriter> contextToprintwriter = relationtypeTocontextToprintwriter.get(relationtype);
 								if(contextToprintwriter != null)
-								{		
+								{
 									//If we do care about this relationship type, check whether
 									//we can label this relationship confidently enough to
 									//use it as a training instance.
