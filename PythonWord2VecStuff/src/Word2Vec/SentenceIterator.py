@@ -4,7 +4,7 @@ import zipfile, os
 
 
 #Set this to false once we are done just checking if the program works.
-checkingifworking = True
+checkingifworking = False
 
 
 class SentenceIterator(object):
