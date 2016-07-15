@@ -51,7 +51,6 @@ public class ProducedFileGetter
 	
 	
 	
-	
 	//The file containing a vector for each word in our vocabulary.  This file is written by the Python program TrainModel.py.
 	//trainingtype is one of the three entity extracted text types mentioned above getEntityExtractedText(String filename).
 	public static File getWordVectorsFile(String trainingtype)
@@ -62,7 +61,7 @@ public class ProducedFileGetter
 		return new File(dir, "wordvectors." + trainingtype);
 	}
 	
-	//Known possible filenames are "original", "entityreplaced", and "aliasreplaced"
+	//Known possible filenames are "original", "entityreplaced", "aliasreplaced", and "unlemmatized"
 	public static File getEntityExtractedText(String filename, boolean training)
 	{
 		File dir = new File(producedfilesdirectory, "Testing/EntityExtractedText/");
@@ -186,6 +185,6 @@ public class ProducedFileGetter
 	//Purely for testing
 	public static void main(String[] args)
 	{
-		System.out.println(getEntityExtractedText("original").getAbsolutePath());
+		
 	}
 }

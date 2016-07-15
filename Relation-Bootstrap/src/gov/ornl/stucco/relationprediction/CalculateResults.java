@@ -34,7 +34,8 @@ public class CalculateResults
 	
 	private static ParametersLine commandlineargumentconstraints = null;	//Not using this yet, but we may in the future want to make it possible to put constraints on what parameters are allowable.
 	
-
+	private static boolean training = false;
+	
 	private static String entityextractedfilename;
 	
 	
@@ -51,6 +52,12 @@ public class CalculateResults
 	private static void readArgs(String[] args)
 	{
 		entityextractedfilename = args[0];
+		
+		for(int i = 1; i < args.length; i++)
+		{
+			if("training".equals(args[i]))
+				training = true;
+		}
 	}
 	
 	
@@ -192,7 +199,7 @@ public class CalculateResults
 		{
 			for(String context : validcontexts)
 			{
-				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, context, relationshiptype);
+				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, context, relationshiptype, training);
 				
 				BufferedReader in = new BufferedReader(new FileReader(resultsfile));
 				String line;
@@ -236,7 +243,7 @@ public class CalculateResults
 		{
 			for(String context : validcontexts)
 			{
-				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, context, relationshiptype);
+				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, context, relationshiptype, training);
 				
 				boolean developmentstate = false;
 				boolean teststate = false;

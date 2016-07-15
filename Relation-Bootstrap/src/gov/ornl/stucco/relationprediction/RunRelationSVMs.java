@@ -39,6 +39,7 @@ public class RunRelationSVMs
 	
 	private static String entityextractedfilename;
 	private static String contexts;
+	private static boolean training = false;
 	
 	
 	//private static int folds = 5;
@@ -73,7 +74,7 @@ public class RunRelationSVMs
 				continue;
 			
 			
-			PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, contexts, relationtype)));
+			PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, contexts, relationtype, training)));
 			
 			//In order to do cross-validation, we need to set aside two folds for tuning parameters and testing.  So testfold1 and testfold2 will be those folds.  All the other folds can be used for training.
 			for(int t1index = 0; t1index < folds.length; t1index++)
@@ -196,23 +197,17 @@ public class RunRelationSVMs
 			System.exit(3);
 		}
 		
-		//kerneltype = args[2];
-		//if( !(kerneltype.equals("RBF") || kerneltype.equals("Linear")) )
-		//{
-		//	System.err.println("Error, invalid kernel type.  Kerneltype must be RBF or Linear.");
-		//	System.exit(3);
-		//}
-		//else if(kerneltype.equals("Linear"))	//Linear kernels do not have a gamma parameter, so reset the gammas array to have only one value to reduce redundant processing.
-		//{
-		//	double[] holder = { 0. };
-		//	gammas = holder;
-		//}
+		for(int i = 2; i < args.length; i++)
+		{
+			if("training".equals(args[i]))
+				training = true;
+		}
 	}
 	
 	
 	private static void writeSVMFiles(int relationtype, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String contexts, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
 	{
-		File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, relationtype);
+		File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, relationtype, training);
 	
 		try
 		{

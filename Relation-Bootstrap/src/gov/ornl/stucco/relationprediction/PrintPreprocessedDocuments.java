@@ -46,8 +46,15 @@ public class PrintPreprocessedDocuments
 	//having the highest predicted probability.
 	public static double arbitraryprobabilitythreshold = 0.3; 
 	
+	//We read files from and write files to a different place if our goal is to train a new model.  In production, our goal will be only to make predictions, so we will not bother with any training.
+	private static boolean training = false;
+	
+	
 	public static void main(String[] args) throws IOException
 	{
+		readArgs(args);
+		
+		
 		//Open printwriters for each of the three text file types mentioned at the beginning of this .java file.  We get all
 		//files from ProducedFileGetter to help maintain consistency between locations used by different programs.
 		//PrintWriter aliassubstitutednamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("aliasreplaced")));
@@ -55,20 +62,23 @@ public class PrintPreprocessedDocuments
 		//PrintWriter originalnamesout = new PrintWriter(new FileWriter(ProducedFileGetter.getEntityExtractedText("original")));
 		
 		//Since there may be issues with sharing files as big as these might turn out to be through github, we are zipping them instead of just writing them in plain text format.
-		ZipOutputStream aliassubstitutednamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("aliasreplaced"))));
+		ZipOutputStream aliassubstitutednamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("aliasreplaced", training))));
 		aliassubstitutednamesout.putNextEntry(new ZipEntry("data"));
 
-		ZipOutputStream completelyreplacednamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("entityreplaced"))));
+		ZipOutputStream completelyreplacednamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("entityreplaced", training))));
 		completelyreplacednamesout.putNextEntry(new ZipEntry("data"));
 
-		ZipOutputStream originalnamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("original"))));
+		ZipOutputStream originalnamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("original", training))));
 		originalnamesout.putNextEntry(new ZipEntry("data"));
+
+		ZipOutputStream unlemmatizednamesout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(ProducedFileGetter.getEntityExtractedText("unlemmatized", training))));
+		unlemmatizednamesout.putNextEntry(new ZipEntry("data"));
 		
 		
 		
 		
 		//Process each serialized file.
-		for(File f : ProducedFileGetter.getEntityExtractedSerializedDirectory().listFiles())
+		for(File f : ProducedFileGetter.getEntityExtractedSerializedDirectory(training).listFiles())
 		{
 			if(!f.getName().endsWith(".ser.gz"))
 				continue;
@@ -128,6 +138,8 @@ public class PrintPreprocessedDocuments
 				 			originalentitystring = "[" + entitytypestring + "_" + originalentitystring.replaceAll(" ", "_") + "]";
 				 			originalnamesout.write((originalentitystring + " ").getBytes());
 				 			
+				 			unlemmatizednamesout.write((originalentitystring + " ").getBytes());
+				 			
 				 			//Print the alias replaced version of the text as described above.
 				 			String aliasreplacedentitystring = "";
 				 			for(int j = indexoffirsttokenhavingcurrentstate; j < i; j++)
@@ -155,6 +167,7 @@ public class PrintPreprocessedDocuments
 			 			aliassubstitutednamesout.write( (((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ").getBytes());
 			 			completelyreplacednamesout.write( (((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ").getBytes());
 			 			originalnamesout.write( (((String)labels.get(i).get(LemmaAnnotation.class)).toLowerCase() + " ").getBytes());
+			 			unlemmatizednamesout.write( (((String)labels.get(i).get(TextAnnotation.class)) + " ").getBytes());
 			 		}
 			 	}
 			 	
@@ -175,6 +188,8 @@ public class PrintPreprocessedDocuments
 		 			originalentitystring = originalentitystring.trim();
 		 			originalentitystring = "[" + entitytypestring + "_" + originalentitystring.replaceAll(" ", "_") + "]";
 		 			originalnamesout.write((originalentitystring + " ").getBytes());
+
+		 			unlemmatizednamesout.write((originalentitystring + " ").getBytes());
 		 			
 		 			//Replace the entity with its main alias if available.
 		 			String aliasreplacedentitystring = "";
@@ -196,11 +211,15 @@ public class PrintPreprocessedDocuments
 		 		aliassubstitutednamesout.write("\n".getBytes());
 		 		completelyreplacednamesout.write("\n".getBytes());
 		 		originalnamesout.write("\n".getBytes());
+		 		
+		 		unlemmatizednamesout.write("\n".getBytes());
 			}
 			
 			aliassubstitutednamesout.write("\n".getBytes());
 			completelyreplacednamesout.write("\n".getBytes());
 			originalnamesout.write("\n".getBytes());
+			
+			unlemmatizednamesout.write("\n".getBytes());
 		}
 
 		aliassubstitutednamesout.closeEntry();
@@ -209,6 +228,14 @@ public class PrintPreprocessedDocuments
 		completelyreplacednamesout.close();
 		originalnamesout.closeEntry();
 		originalnamesout.close();
+		unlemmatizednamesout.closeEntry();
+		unlemmatizednamesout.close();
+	}
+	
+	private static void readArgs(String[] args)
+	{
+		if("training".equals(args[0]))
+			training = true;
 	}
 	
 	private static int resetEntityFinalTypeHeuristically(int predictedtype, CoreLabel token)

@@ -28,6 +28,7 @@ public class WriteRelationInstanceFiles
 	
 	private static String entityextractedfilename;
 	private static String contexts;
+	private static boolean training = false;
 	
 	private static HashMap<Integer,PrintWriter> relationtypeToprintwriter;
 	
@@ -68,6 +69,12 @@ public class WriteRelationInstanceFiles
 			System.err.println("Error, invalid context.  Context must be 000, 001, 010, 011, 100, 101, 110, or 111.");
 			System.exit(3);
 		}
+		
+		for(int i = 2; i < args.length; i++)
+		{
+			if("training".equals(args[i]))
+				training = true;
+		}
 	}
 	
 	private static void initializePrintWriters()
@@ -78,7 +85,7 @@ public class WriteRelationInstanceFiles
 		{
 			for(Integer i : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 			{
-				File f = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, i);
+				File f = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, i, training);
 				relationtypeToprintwriter.put(i, new PrintWriter(new FileWriter(f)));
 			}
 		}catch(IOException e)
@@ -97,7 +104,7 @@ public class WriteRelationInstanceFiles
 			//BufferedReader in = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText(entityextractedfilename)));
 
 			//We are switching to using zip files for these because they could potentially be very big.
-			ZipFile zipfile = new ZipFile(ProducedFileGetter.getEntityExtractedText(entityextractedfilename));
+			ZipFile zipfile = new ZipFile(ProducedFileGetter.getEntityExtractedText(entityextractedfilename, training));
 			ZipEntry entry = zipfile.entries().nextElement();
 		    BufferedReader in = new BufferedReader(new InputStreamReader(zipfile.getInputStream(entry)));
 	
@@ -106,9 +113,14 @@ public class WriteRelationInstanceFiles
 			//BufferedReader aliasalignedin = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText("original")));
 			
 		    //We are switching to using zip files for these because they could potentially be very big.
-			ZipFile zipfile2 = new ZipFile(ProducedFileGetter.getEntityExtractedText("original"));
+			ZipFile zipfile2 = new ZipFile(ProducedFileGetter.getEntityExtractedText("aliasreplaced", training));
 			ZipEntry entry2 = zipfile2.entries().nextElement();
-			BufferedReader originalalignedin = new BufferedReader(new InputStreamReader(zipfile2.getInputStream(entry2)));
+		    BufferedReader aliasreplacedalignedin = new BufferedReader(new InputStreamReader(zipfile2.getInputStream(entry2)));
+			
+		    //We are switching to using zip files for these because they could potentially be very big.
+			ZipFile zipfile3 = new ZipFile(ProducedFileGetter.getEntityExtractedText("unlemmatized", training));
+			ZipEntry entry3 = zipfile3.entries().nextElement();
+			BufferedReader unlemmatizedalignedin = new BufferedReader(new InputStreamReader(zipfile3.getInputStream(entry3)));
 			
 			
 			int linecounter = 0;	//Keep track of the number of the line we are on in the file.  We'll make a note of what line our instances come from in this way.
@@ -120,7 +132,8 @@ public class WriteRelationInstanceFiles
 			while((line = in.readLine()) != null)
 			{
 				//Read the corresponding line from the alias replaced text file.
-				String aliasedline = originalalignedin.readLine();
+				String aliasedline = aliasreplacedalignedin.readLine();
+				String unlemmatizedline = unlemmatizedalignedin.readLine();
 				
 				
 				linecounter++;
@@ -138,6 +151,7 @@ public class WriteRelationInstanceFiles
 				
 				//And keep track of the alias replaced tokens the normal tokens correspond to.
 				String[] aliasreplacedtokens = aliasedline.split(" ");
+				String[] unlemmatizedtokens = unlemmatizedline.split(" ");
 				
 				
 				//The text file we are reading is already annotated with cyber entities.
@@ -145,10 +159,12 @@ public class WriteRelationInstanceFiles
 				//the tokens array that tells us the token's Cyber entity label (if it has one).
 				CyberEntityText[] cyberentitytexts = new CyberEntityText[tokens.length];
 				CyberEntityText[] aliasedcyberentitytexts = new CyberEntityText[tokens.length];
+				CyberEntityText[] unlemmatizedcyberentitytexts = new CyberEntityText[tokens.length];
 				for(int i = 0; i < tokens.length; i++)
 				{
 					cyberentitytexts[i] = CyberEntityText.getCyberEntityTextFromToken(tokens[i]);
 					aliasedcyberentitytexts[i] = CyberEntityText.getCyberEntityTextFromToken(aliasreplacedtokens[i]);
+					unlemmatizedcyberentitytexts[i] = CyberEntityText.getCyberEntityTextFromToken(unlemmatizedtokens[i]);
 				}
 				
 				
@@ -164,6 +180,7 @@ public class WriteRelationInstanceFiles
 								//...we construct a relationship instance from them.
 								GenericCyberEntityTextRelationship relationship = new GenericCyberEntityTextRelationship(cyberentitytexts[i], cyberentitytexts[j]);
 								GenericCyberEntityTextRelationship aliasedrelationship = new GenericCyberEntityTextRelationship(aliasedcyberentitytexts[i], aliasedcyberentitytexts[j]);
+								GenericCyberEntityTextRelationship unlemmatizedrelationship = new GenericCyberEntityTextRelationship(unlemmatizedcyberentitytexts[i], unlemmatizedcyberentitytexts[j]);
 								
 								
 								//Any pair of entities of any types can be used to construct a relationship instance.
@@ -174,7 +191,7 @@ public class WriteRelationInstanceFiles
 								//types we care about.  Since we only built print writers for the types we cared about 
 								//earlier in the program, we check for this condition by checking if we constructed a 
 								//PrintWriter for this relationship.
-								Integer relationtype = relationship.getRelationType();
+								Integer relationtype = aliasedrelationship.getRelationType();
 								
 								
 								PrintWriter pw = relationtypeToprintwriter.get(relationtype);
@@ -242,7 +259,10 @@ public class WriteRelationInstanceFiles
 										
 										//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
 										//add the entity names to the end of the line.
-										instanceline += " # " + linecounter + " " + i + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + relationship.getSecondEntity().getEntityText();
+										if(training)
+											instanceline += " # " + linecounter;
+										else
+											instanceline += " # " + linecounter + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
 										
 										
 										//And finally, print it to the appropriate file using the PrintWriter we 
@@ -256,9 +276,11 @@ public class WriteRelationInstanceFiles
 				}
 			}
 			in.close();
-			originalalignedin.close();
+			aliasreplacedalignedin.close();
+			unlemmatizedalignedin.close();
 			zipfile.close();
 			zipfile2.close();
+			zipfile3.close();
 		}catch(IOException e)
 		{
 			System.out.println(e);
