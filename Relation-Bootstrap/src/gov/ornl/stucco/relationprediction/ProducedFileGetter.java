@@ -91,14 +91,14 @@ public class ProducedFileGetter
 	
 	
 	//This file contains predictions made by an SVM.
-	public static File getPredictionsFile(String entityextractedfilename, String contexts, int relationshiptype, boolean training)
+	public static File getPredictionsFile(String entityextractedfilename, int relationshiptype, boolean training)
 	{
 		File dir = new File(producedfilesdirectory, "Testing/PredictionsFiles/");
 		if(training)
 			dir = new File(producedfilesdirectory, "Training/PredictionsFiles/");
 		dir.mkdirs();
 		
-		String filename = "Predictions." + entityextractedfilename + "." + contexts + "." + relationshiptype;
+		String filename = "Predictions." + entityextractedfilename + "." + relationshiptype;
 		
 		return new File(dir, filename);
 	}

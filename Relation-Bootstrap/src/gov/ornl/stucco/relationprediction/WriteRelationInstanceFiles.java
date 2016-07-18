@@ -206,71 +206,63 @@ public class WriteRelationInstanceFiles
 									//its contents are easiest to align with known entities.
 									//Boolean isknownrelationship = relationship.isKnownRelationship();
 									Boolean isknownrelationship = aliasedrelationship.isKnownRelationship();
-									
-	
-									////Notice that isknownrelationship is a Boolean (an object) rather than a primitive
-									////boolean.  This means it can be true, false, or null.  It should be true
-									////if this is a known relationship, false if we think it is known that it is not
-									////a relationship, and null if we do not know.  As long as it is true or false,
-									////it can be used for training, so check for null.
-									//if(isknownrelationship != null)
-									//{
-									
+									if(!(training && isknownrelationship == null))	//Do not bother to write instances with 0 labels.  isknownrelationship == null if the label would be 0 (we don't know the label).
+									{	
+											//Make a list of tokens in this context, then
+											//take the average of their corresponding vectors.
+											//Add the resulting vector to the concatenatedvector we are using 
+											//for our feature representation.
+											String[] context1 = Arrays.copyOfRange(tokens, 0, i);
+											double[] context1vector = wvm.getContextVector(context1);
 										
-										//Make a list of tokens in this context, then
-										//take the average of their corresponding vectors.
-										//Add the resulting vector to the concatenatedvector we are using 
-										//for our feature representation.
-										String[] context1 = Arrays.copyOfRange(tokens, 0, i);
-										double[] context1vector = wvm.getContextVector(context1);
-										
-										//Context between the entities.
-										String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
-										double[] context2vector = wvm.getContextVector(context2);
+											//Context between the entities.
+											String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
+											double[] context2vector = wvm.getContextVector(context2);
 									
-										//Context after the entities.
-										String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
-										double[] context3vector = wvm.getContextVector(context3);
+											//Context after the entities.
+											String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
+											double[] context3vector = wvm.getContextVector(context3);
 									
 									
-										for(String context : validcontexts)
-										{
-											PrintWriter pw = contextToprintwriter.get(context);
+											for(String context : validcontexts)
+											{
+												PrintWriter pw = contextToprintwriter.get(context);
 											
 
-											//Construct the context
-											//vectors using the tokens in the appropriate context windows and
-											//the word vectors.  Concatenate all the chosen vectors into one
-											//feature vecture which we will use to represent the instance.
-											ArrayList<Double> concatenatedvectors = new ArrayList<Double>();
-											if(context.charAt(0) == '1')
-												for(double value : context1vector)
-													concatenatedvectors.add(value);
-											if(context.charAt(1) == '1')
-												for(double value : context2vector)
-													concatenatedvectors.add(value);
-											if(context.charAt(2) == '1')
-												for(double value : context3vector)
-													concatenatedvectors.add(value);
+												//Construct the context
+												//vectors using the tokens in the appropriate context windows and
+												//the word vectors.  Concatenate all the chosen vectors into one
+												//feature vecture which we will use to represent the instance.
+												ArrayList<Double> concatenatedvectors = new ArrayList<Double>();
+												if(context.charAt(0) == '1')
+													for(double value : context1vector)
+														concatenatedvectors.add(value);
+												if(context.charAt(1) == '1')
+													for(double value : context2vector)
+														concatenatedvectors.add(value);
+												if(context.charAt(2) == '1')
+													for(double value : context3vector)
+														concatenatedvectors.add(value);
 											
 											
-											//Now, actually build the SVM_light style string representation of the instance.
-											String instanceline = buildSVMLightLine(isknownrelationship, concatenatedvectors);
+												//Now, actually build the SVM_light style string representation of the instance.
+												String instanceline = buildSVMLightLine(isknownrelationship, concatenatedvectors);
 										
 										
-											//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
-											//add the entity names to the end of the line.
-											if(training)
-												instanceline += " # " + linecounter;
-											else
-												instanceline += " # " + linecounter + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
+												//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
+												//add the entity names to the end of the line.
+												if(training)
+													instanceline += " # " + linecounter;
+												else
+													instanceline += " # " + linecounter + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
 										
 										
-											//And finally, print it to the appropriate file using the PrintWriter we 
-											//made earlier.
-											pw.println(instanceline);
-										}
-									//}
+												//And finally, print it to the appropriate file using the PrintWriter we 
+												//made earlier.
+												pw.println(instanceline);
+											}
+										//}
+									}
 								}
 							}
 						}

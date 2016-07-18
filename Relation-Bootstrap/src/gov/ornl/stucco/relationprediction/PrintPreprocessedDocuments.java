@@ -9,6 +9,8 @@
  * The third contains a tokenized, lemmatized version wherein we try to match the entity-labeled text segments with their canonical,
  * Freebase names by matching the entity text against Freebase aliases.  The entities are replaced with a token indicating 
  * their predicted entity type and canonical name.
+ * There is one final file that is tokenized but not lemmatized called unlemmatized.  It is used solely because we might sometimes
+ * want to know what the original text looked like.
  */
 
 package gov.ornl.stucco.relationprediction;

@@ -14,27 +14,27 @@ import java.util.HashSet;
 
 public class CalculateResults 
 {
+	//This program is very expensive to run, so if this variable gets turned on, we will run it on only a subset of the available data to save time.  This should be good enough to let us know if the program is working alright.
+	private static boolean testingprogram = true;
+	
+	
 	private static NumberFormat formatter = new DecimalFormat(".000");
 	private static boolean printperfoldresults = false;
 	
-	
-	//For testing, just use context 111.  But when we want to make actual predictions, uncomment the following
-	//line and comment out the validcontexts = {"111"}; line.
-	//private static String[] validcontexts = WriteRelationInstanceFiles.validcontexts;
-	private static String[] validcontexts = {"111"};
-	
-	//For testing, just use relationship type 1.  But when we want to make actual predictions, uncomment the following 
-	//line and comment out the static setting
-	//private static HashSet<Integer> relationshiptypes = GenericCyberEntityTextRelationship.allpositiverelationshiptypesset;
-	private static HashSet<Integer> relationshiptypes = new HashSet<Integer>();
+
+	private static HashSet<Integer> relationshiptypes = GenericCyberEntityTextRelationship.allpositiverelationshiptypesset;
 	static
 	{
-		relationshiptypes.add(1);
+		if(testingprogram)
+		{
+			relationshiptypes = new HashSet<Integer>();
+			relationshiptypes.add(1);
+		}
 	}
 	
 	private static ParametersLine commandlineargumentconstraints = null;	//Not using this yet, but we may in the future want to make it possible to put constraints on what parameters are allowable.
 	
-	private static boolean training = false;
+	//private static boolean training = false;
 	
 	private static String entityextractedfilename;
 	
@@ -53,11 +53,11 @@ public class CalculateResults
 	{
 		entityextractedfilename = args[0];
 		
-		for(int i = 1; i < args.length; i++)
-		{
-			if("training".equals(args[i]))
-				training = true;
-		}
+		//for(int i = 1; i < args.length; i++)
+		//{
+		//	if("training".equals(args[i]))
+		//		training = true;
+		//}
 	}
 	
 	
@@ -79,7 +79,7 @@ public class CalculateResults
 				//Read the predictions for when the entities come in the normal order.
 				ParametersLine normalbestparameters = findBestParameters(commandlineargumentconstraints, relationshiptype, testfold);
 				normalbestparameterslist.add(normalbestparameters);
-				ArrayList<RelationPrediction> normalpredictionstoadd = readPredictions(normalbestparameters, testfold, relationshiptype, false);
+				ArrayList<RelationPrediction> normalpredictionstoadd = readPredictions(normalbestparameters, testfold, relationshiptype, true, false);
 				testpredictions.addAll(normalpredictionstoadd);
 				{
 					double[] fpr = getFPRForTestInstances(normalpredictionstoadd);
@@ -92,7 +92,7 @@ public class CalculateResults
 				//Add the predictions for when the entities come in the reverse order.
 				ParametersLine reversebestparameters = findBestParameters(commandlineargumentconstraints, GenericCyberEntityTextRelationship.getReverseRelationshipType(relationshiptype), testfold);
 				reversebestparameterslist.add(reversebestparameters);
-				ArrayList<RelationPrediction> reversepredictionstoadd = readPredictions(reversebestparameters, testfold, relationshiptype, false);
+				ArrayList<RelationPrediction> reversepredictionstoadd = readPredictions(reversebestparameters, testfold, relationshiptype, true, false);
 				testpredictions.addAll(reversepredictionstoadd);
 				testpredictions.addAll(normalpredictionstoadd);
 				{
@@ -153,7 +153,7 @@ public class CalculateResults
 		}
 	}
 
-	private static ParametersLine findBestParameters(ParametersLine cmdlineargconstraints, int relationshiptype, int testfold)
+	private static ParametersLine findBestParameters(ParametersLine cmdlineargconstraints, int relationshiptype, Integer testfold)
 	{
 		ArrayList<ParametersLine> allparameters = getAllParameters(cmdlineargconstraints, relationshiptype);
 
@@ -162,7 +162,7 @@ public class CalculateResults
 		
 		for(ParametersLine currentparameters : allparameters)
 		{
-			ArrayList<RelationPrediction> developmentpredictions = readPredictions(currentparameters, testfold, relationshiptype, true);
+			ArrayList<RelationPrediction> developmentpredictions = readPredictions(currentparameters, testfold, relationshiptype, true, true);
 		
 			double TPs = 0.;
 			double FPs = 0.;
@@ -197,9 +197,7 @@ public class CalculateResults
 		
 		try
 		{
-			for(String context : validcontexts)
-			{
-				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, context, relationshiptype, training);
+				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, relationshiptype, true);
 				
 				BufferedReader in = new BufferedReader(new FileReader(resultsfile));
 				String line;
@@ -223,7 +221,6 @@ public class CalculateResults
 					}
 				}
 				in.close();
-			}
 		}catch(IOException e)
 		{
 			System.out.println(e);
@@ -235,15 +232,13 @@ public class CalculateResults
 	}
 
 	//development should be sent true if we want development predictions, and false if we want test predictions.
-	private static ArrayList<RelationPrediction> readPredictions(ParametersLine currentparameters, int testfold, int relationshiptype, boolean development)
+	private static ArrayList<RelationPrediction> readPredictions(ParametersLine currentparameters, Integer testfold, int relationshiptype, boolean training, boolean development)
 	{
 		ArrayList<RelationPrediction> results = new ArrayList<RelationPrediction>();
 		
 		try
 		{
-			for(String context : validcontexts)
-			{
-				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, context, relationshiptype, training);
+				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, relationshiptype, training);
 				
 				boolean developmentstate = false;
 				boolean teststate = false;
@@ -260,9 +255,10 @@ public class CalculateResults
 						ParametersLine pl = new ParametersLine(line, false);
 						if(pl.exactlyMatches(currentparameters))
 						{
-							int resultfold = pl.getResultsFold();
-							int excludedfold1 = pl.getExcludedFold1();
-							int excludedfold2 = pl.getExcludedFold2();
+							Integer resultfold = pl.getResultsFold();
+							Integer excludedfold1 = pl.getExcludedFold1();
+							Integer excludedfold2 = pl.getExcludedFold2();
+							
 							if(resultfold != testfold)	//Every fold other than the test fold is used for development.
 							{
 								if(excludedfold1 == testfold || excludedfold2 == testfold)	//A fold's results should be included in the development set only if the test fold was not used in training.
@@ -284,7 +280,6 @@ public class CalculateResults
 					}
 				}
 				in.close();
-			}
 		}catch(IOException e)
 		{
 			System.out.println(e);

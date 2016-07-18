@@ -21,7 +21,7 @@ hiddenlayersize = 100
 windowsize = 5 #maximum distance between words looked at during training.
 skipgramorbow = 1 #1 for skip gram.  0 for continuous bag of words.
 wordoccurrencethreshold = 100 #If a word occurs at least this number of times in our dataset, include it in our vocabulary.
-repeatrelevantdocumenttimes = 100 #We want our relevant documents to have more of an impact on the model than the wikipedia articles, so feed them into the training process multiple times.  This number should be greater than wordoccurrencethreshold, or some important vocabulary may be left out.
+repeatrelevantdocumenttimes = 50 #We want our relevant documents to have more of an impact on the model than the wikipedia articles, so feed them into the training process multiple times.  If this number is smaller than wordoccurrencethreshold, some vocabulary may be left out.  
 
 
 

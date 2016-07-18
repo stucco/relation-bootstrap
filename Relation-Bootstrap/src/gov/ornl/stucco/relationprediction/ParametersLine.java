@@ -53,11 +53,25 @@ public class ParametersLine
 			//Figure out from the parameters line which folds were excluded from the training set (and which fold was used for testing)
 			String testfoldsarea = splitline[0];
 			String[] resultsfoldAndexcludedfolds = testfoldsarea.split("-");
-			resultsfold = Integer.parseInt(resultsfoldAndexcludedfolds[0]);
+			
+			
+			if(resultsfoldAndexcludedfolds[0].equals("null"))
+				resultsfold = null;
+			else
+				resultsfold = Integer.parseInt(resultsfoldAndexcludedfolds[0]);
+			
 			String[] excludedfolds = resultsfoldAndexcludedfolds[1].split(",");
-			excludedfold1 = Integer.parseInt(excludedfolds[0]);
-			excludedfold2 = Integer.parseInt(excludedfolds[1]);
+			
+			if(excludedfolds[0].equals("null"))
+				excludedfold1 = null;
+			else
+				excludedfold1 = Integer.parseInt(excludedfolds[0]);
+			if(excludedfolds[1].equals("null"))
+				excludedfold2 = null;
+			else
+				excludedfold2 = Integer.parseInt(excludedfolds[1]);
 		
+			
 			//Set the value of the parameter given on this line.
 			for(int i = 1; i < splitline.length; i++)
 			{

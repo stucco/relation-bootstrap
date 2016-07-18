@@ -16,6 +16,10 @@ import java.util.Arrays;
 
 public class RunRelationSVMs
 {
+	//This program is very expensive to run, so if this variable gets turned on, we will run it on only a subset of the available data to save time.  This should be good enough to let us know if the program is working alright.
+	private static boolean testingprogram = true;
+	
+	
 	private static String pid;	//In the even that we have multiple instances of this program running, we will use each process's pid to ensure that their temporary files do not interfere with eachother.
 	static
 	{
@@ -28,9 +32,6 @@ public class RunRelationSVMs
 	//We may have previously run this program and thus have already trained some model files.  Set this to false if we do not want to train a new model in this case.
 	private static boolean alwaysretrain = true;
 	
-	//This program is very expensive to run, so if this variable gets turned on, we will run it on only a subset of the available data to save time.  This should be good enough to let us know if the program is working alright.
-	private static boolean testingprogram = true;
-	
 	
 	private static double[] cs = { 100., 1000., 10000., 100000};
 	private static double[] gammas = { .001, .01, .1, 1., 10., 100. };
@@ -38,8 +39,8 @@ public class RunRelationSVMs
 	
 	
 	private static String entityextractedfilename;
-	private static String contexts;
-	private static boolean training = false;
+	//private static String contexts;
+	//private static boolean training = false;
 	
 	
 	//private static int folds = 5;
@@ -70,94 +71,97 @@ public class RunRelationSVMs
 		for(int relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 		{
 			//For testing, we will only pay attention to one relationship type, as this program is about 50 times as expensive to run for all relationship types.
-			if(testingprogram && relationtype != 1)
+			if(testingprogram && !(relationtype == 1 || relationtype == -1))
 				continue;
 			
 			
-			PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, contexts, relationtype, training)));
-			
-			//In order to do cross-validation, we need to set aside two folds for tuning parameters and testing.  So testfold1 and testfold2 will be those folds.  All the other folds can be used for training.
-			for(int t1index = 0; t1index < folds.length; t1index++)
-			//for(int testfold1 = 0; testfold1 < folds; testfold1++)
+			for(String context : WriteRelationInstanceFiles.validcontexts)
 			{
-				Integer testfold1 = folds[t1index];
-				
-				for(int t2index = t1index; t2index < folds.length; t2index++)
-				//for(int testfold2 = testfold1; testfold2 < folds; testfold2++)
+				PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, relationtype, true)));
+			
+				//In order to do cross-validation, we need to set aside two folds for tuning parameters and testing.  So testfold1 and testfold2 will be those folds.  All the other folds can be used for training.
+				for(int t1index = 0; t1index < folds.length; t1index++)
+				//for(int testfold1 = 0; testfold1 < folds; testfold1++)
 				{
-					Integer testfold2 = folds[t2index];
+					Integer testfold1 = folds[t1index];
+				
+					for(int t2index = t1index; t2index < folds.length; t2index++)
+					//for(int testfold2 = testfold1; testfold2 < folds; testfold2++)
+					{
+						Integer testfold2 = folds[t2index];
 					
 					
-					//As mentioned above, the null value is included because of the case where we want to use all data for training and testing. But this is only one case.  We do not need to pair null with any other test fold.  So if either of the two testfolds == null, just skip this iteration.  But if both of them are null, do this special training and testing.
-					if( ( testfold1 == null || testfold2 == null ) && !(testfold1 == null && testfold2 == null) )
-						continue;
+						//As mentioned above, the null value is included because of the case where we want to use all data for training and testing. But this is only one case.  We do not need to pair null with any other test fold.  So if either of the two testfolds == null, just skip this iteration.  But if both of them are null, do this special training and testing.
+						if( ( testfold1 == null || testfold2 == null ) && !(testfold1 == null && testfold2 == null) )
+							continue;
 					
 					
-					//Write the training data to a temporary file.  Since testing is, by comparison, super fast, run testing too.
-					writeSVMFiles(relationtype, testfold1, testfold2, entityextractedfilename, contexts, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
+						//Write the training data to a temporary file.  Since testing is, by comparison, super fast, run testing too.
+						writeSVMFiles(relationtype, testfold1, testfold2, entityextractedfilename, context, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
 						
 					
-					//Our SVMs have two parameters, c and gamma.  Iterate over all combinations of them so that we can do a grid search. (Gamma is not needed for linear kernels, so we set the gammas array to have only one value in readArgs() if the kernel type chosen was Linear).
-					for(String kerneltype : kerneltypes)
-					{
-						for(double c : cs)
+						//Our SVMs have two parameters, c and gamma.  Iterate over all combinations of them so that we can do a grid search. (Gamma is not needed for linear kernels, so we set the gammas array to have only one value in readArgs() if the kernel type chosen was Linear).
+						for(String kerneltype : kerneltypes)
 						{
-							for(double gamma : gammas)
+							for(double c : cs)
 							{
-								File modelfile = ProducedFileGetter.getSVMModelFile(kerneltype, entityextractedfilename, contexts, relationtype, testfold1, testfold2, c, gamma);
-							
-								String line;
-								if(!modelfile.exists() || alwaysretrain)
+								for(double gamma : gammas)
 								{
-									String[] trainarray = null;
-									if(kerneltype.equals("Linear"))
-										trainarray = new String[]{"java", "-cp", libsvmjar.getAbsolutePath(), "svm_train", "-s", "0", "-t", "0", "-c", "" + c, trainingfile.getAbsolutePath(), modelfile.getAbsolutePath()};
-									else if(kerneltype.equals("RBF"))
-										trainarray = new String[]{"java", "-cp", libsvmjar.getAbsolutePath(), "svm_train", "-s", "0", "-t", "2", "-c", "" + c, "-g", "" + gamma, trainingfile.getAbsolutePath(), modelfile.getAbsolutePath()};
+									File modelfile = ProducedFileGetter.getSVMModelFile(kerneltype, entityextractedfilename, context, relationtype, testfold1, testfold2, c, gamma);
+							
+									String line;
+									if(!modelfile.exists() || alwaysretrain)
+									{
+										String[] trainarray = null;
+										if(kerneltype.equals("Linear"))
+											trainarray = new String[]{"java", "-cp", libsvmjar.getAbsolutePath(), "svm_train", "-s", "0", "-t", "0", "-c", "" + c, trainingfile.getAbsolutePath(), modelfile.getAbsolutePath()};
+										else if(kerneltype.equals("RBF"))
+											trainarray = new String[]{"java", "-cp", libsvmjar.getAbsolutePath(), "svm_train", "-s", "0", "-t", "2", "-c", "" + c, "-g", "" + gamma, trainingfile.getAbsolutePath(), modelfile.getAbsolutePath()};
 								
 
-									Process process = (new ProcessBuilder(trainarray)).start();
-									BufferedReader br = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+										Process process = (new ProcessBuilder(trainarray)).start();
+										BufferedReader br = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+										while ((line = br.readLine()) != null)
+											System.out.println(line);
+										process.waitFor();
+									}
+							
+							
+									//Apply the model to test instances
+									String[] t1array = {"java", "-cp",  libsvmjar.getAbsolutePath(), "svm_predict", testfile1.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile1.getAbsolutePath()};
+									Process t1process = (new ProcessBuilder(t1array)).start();
+									BufferedReader br = new BufferedReader(new InputStreamReader(t1process.getErrorStream()));
 									while ((line = br.readLine()) != null)
 										System.out.println(line);
-									process.waitFor();
-								}
+									t1process.waitFor();
+							
+									//And print the resulting classified instances to a result file.
+									printResultsFile(testfold1 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + context, testresultsout, testfile1, testfile1comments, testpredictionsfile1);
 							
 							
-								//Apply the model to test instances
-								String[] t1array = {"java", "-cp",  libsvmjar.getAbsolutePath(), "svm_predict", testfile1.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile1.getAbsolutePath()};
-								Process t1process = (new ProcessBuilder(t1array)).start();
-								BufferedReader br = new BufferedReader(new InputStreamReader(t1process.getErrorStream()));
-								while ((line = br.readLine()) != null)
-									System.out.println(line);
-								t1process.waitFor();
-							
-								//And print the resulting classified instances to a result file.
-								printResultsFile(testfold1 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + contexts, testresultsout, testfile1, testfile1comments, testpredictionsfile1);
-							
-							
-								//Recall that we left two folds out of the training set.  If those two folds are not the same, also apply the model to and print the results from the other fold.
-								if(testfold1 != testfold2 && (testfold1 != null & testfold2 != null))
-								{
-									String[] t2array = {"java", "-cp", libsvmjar.getAbsolutePath(), "svm_predict", testfile2.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile2.getAbsolutePath()};
-									Process t2process = (new ProcessBuilder(t2array)).start();
-									br = new BufferedReader(new InputStreamReader(t2process.getErrorStream()));
-									while ((line = br.readLine()) != null)
-										System.out.println(line);
-									t2process.waitFor();
+									//Recall that we left two folds out of the training set.  If those two folds are not the same, also apply the model to and print the results from the other fold.
+									if(testfold1 != testfold2 && (testfold1 != null & testfold2 != null))
+									{
+										String[] t2array = {"java", "-cp", libsvmjar.getAbsolutePath(), "svm_predict", testfile2.getAbsolutePath(), modelfile.getAbsolutePath(), testpredictionsfile2.getAbsolutePath()};
+										Process t2process = (new ProcessBuilder(t2array)).start();
+										br = new BufferedReader(new InputStreamReader(t2process.getErrorStream()));
+										while ((line = br.readLine()) != null)
+											System.out.println(line);
+										t2process.waitFor();
 								
-									printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + contexts, testresultsout, testfile2, testfile2comments, testpredictionsfile2);
-								}
+										printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + context, testresultsout, testfile2, testfile2comments, testpredictionsfile2);
+									}
 							
-								//We only care about the predictions in most cases.  We need to save the model only when we are training on the entire dataset because that model may be used to make real predictions for stucco.
-								if(!(testfold1 == null && testfold2 == null))
-									modelfile.delete();
+									//We only care about the predictions in most cases.  We need to save the model only when we are training on the entire dataset because that model may be used to make real predictions for stucco.
+									if(!(testfold1 == null && testfold2 == null))
+										modelfile.delete();
+								}
 							}
 						}
 					}
 				}
+				testresultsout.close();
 			}
-			testresultsout.close();
 		}
 		
 		
@@ -172,12 +176,6 @@ public class RunRelationSVMs
 	//Arguments: 
 	//1. extractedfilename (This is the name of the file written by PrintPreprocessedDocuments.  
 	//Valid known values for this argument are "original", "entityreplaced", and "aliasreplaced")
-	//2. contexts (This argument tells us whether or not we want to use the context
-	//preceding the first entity (first digit), whether or not we want to use the context between entities (second digit),
-	//and whether or not we want to use the context after the second entity (third digit).  Valid
-	//values for it are 000, 001, 010, 011, 100, 101, 110, or 111).
-	//3. kerneltype (There are two types of kernels we are interested in training our SVM with, Linear, and RBF. 
-	//If the difference is important to you, you should probably ask Dr. Bridges about them)
 	private static void readArgs(String[] args)
 	{
 		entityextractedfilename = args[0];
@@ -187,27 +185,27 @@ public class RunRelationSVMs
 			System.exit(3);
 		}
 		
-		contexts = args[1];
-		if(contexts.length() != 3 || 
-				!(contexts.charAt(0) == '0' || contexts.charAt(0) == '1') ||
-				!(contexts.charAt(1) == '0' || contexts.charAt(1) == '1') ||
-				!(contexts.charAt(2) == '0' || contexts.charAt(2) == '1'))
-		{
-			System.err.println("Error, invalid context.  Context must be 000, 001, 010, 011, 100, 101, 110, or 111.");
-			System.exit(3);
-		}
+		//contexts = args[1];
+		//if(contexts.length() != 3 || 
+		//		!(contexts.charAt(0) == '0' || contexts.charAt(0) == '1') ||
+		//		!(contexts.charAt(1) == '0' || contexts.charAt(1) == '1') ||
+		//		!(contexts.charAt(2) == '0' || contexts.charAt(2) == '1'))
+		//{
+		//	System.err.println("Error, invalid context.  Context must be 001, 010, 011, 100, 101, 110, or 111.");
+		//	System.exit(3);
+		//}
 		
-		for(int i = 2; i < args.length; i++)
-		{
-			if("training".equals(args[i]))
-				training = true;
-		}
+		//for(int i = 1; i < args.length; i++)
+		//{
+		//	if("training".equals(args[i]))
+		//		training = true;
+		//}
 	}
 	
 	
 	private static void writeSVMFiles(int relationtype, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String contexts, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
 	{
-		File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, relationtype, training);
+		File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, relationtype, true);
 	
 		try
 		{
@@ -275,7 +273,8 @@ public class RunRelationSVMs
 	{
 		String[] splitline = instanceline.split("#");
 		String linecomment = splitline[1];
-		String sentencenumstring = linecomment.substring(1, linecomment.indexOf(' ', 1));
+		//String sentencenumstring = linecomment.substring(1, linecomment.indexOf(' ', 1));
+		String sentencenumstring = linecomment.trim();
 		int sentencenum = Integer.parseInt(sentencenumstring);
 		
 		int modnum = sentencenum % (folds.length - 1);
@@ -307,7 +306,7 @@ public class RunRelationSVMs
 	
 
 	//We used the SVM to classify test instances in the main method, but we have not stored the resulting predictions in a useful way yet.  So do that.
-	private static void printResultsFile(String firstline, PrintWriter resultsout, File testdatafile, File testcommentsfile, File testpredictionsfile) throws IOException
+	public static void printResultsFile(String firstline, PrintWriter resultsout, File testdatafile, File testcommentsfile, File testpredictionsfile) throws IOException
 	{
 		//Since we are writing all results for one relationship type to the same file, we need some way to distinguish what parameters are used to generate a particular result shown in the results file.  This first line tells what parameters were used to generate all instances that follow it.
 		resultsout.println(firstline);
