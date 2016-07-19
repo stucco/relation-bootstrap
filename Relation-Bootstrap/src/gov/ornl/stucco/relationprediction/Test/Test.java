@@ -47,11 +47,13 @@ public class Test
 	
 	public static void main(String[] args) throws Exception
 	{
+		countInstancesInDifferentClasses();
+		
 		//testZipReadingAndWriting();
 		
 		//testCurrentWorkingDirectory();
 		
-		findNearestWords();
+		//findNearestWords();
 		
 		//checkWorkingDirectories();
 		
@@ -402,6 +404,66 @@ public class Test
 	        in.close();
 	    }
 	    zipfile.close();
+	}
+	
+	private static void countInstancesInDifferentClasses() throws IOException
+	{
+		for(int positiverelationtype : GenericCyberEntityTextRelationship.allpositiverelationshiptypesset)
+		{
+			int positivecount = 0;
+			int negativecount = 0;
+			int unknowncount = 0;
+			
+			
+			File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile("aliasreplaced", "111", positiverelationtype, false);
+			
+			BufferedReader in = new BufferedReader(new FileReader(relationinstancesfile));
+			String line;
+			while((line = in.readLine()) != null)
+			{
+				String[] splitline = line.split(" ");
+				
+				int label = Integer.parseInt(splitline[0]);
+				if(label == 1)
+					positivecount++;
+				else if(label == -1)
+					negativecount++;
+				else if(label == 0)
+					unknowncount++;
+				else
+					System.out.println("Error: invalid label: " + label);
+			}
+			in.close();
+			
+			
+			relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile("aliasreplaced", "111", -positiverelationtype, false);
+			
+			in = new BufferedReader(new FileReader(relationinstancesfile));
+			while((line = in.readLine()) != null)
+			{
+				String[] splitline = line.split(" ");
+				
+				int label = Integer.parseInt(splitline[0]);
+				if(label == 1)
+					positivecount++;
+				else if(label == -1)
+					negativecount++;
+				else if(label == 0)
+					unknowncount++;
+				else
+					System.out.println("Error: invalid label: " + label);
+			}
+			in.close();
+			
+			
+			int totalcount = positivecount + negativecount + unknowncount;
+			System.out.println(GenericCyberEntityTextRelationship.relationshipidTorelationshipname.get(positiverelationtype));
+			System.out.println("Total instances: " + totalcount);
+			System.out.println("Positive frequency: " + (positivecount * 1.) / totalcount);
+			System.out.println("Negative frequency: " + (negativecount * 1.) / totalcount);
+			System.out.println("Unknown frequency: " + (unknowncount * 1.) / totalcount);
+			System.out.println();
+		}
 	}
 	
 }

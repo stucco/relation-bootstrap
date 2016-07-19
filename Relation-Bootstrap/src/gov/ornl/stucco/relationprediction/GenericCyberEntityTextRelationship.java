@@ -70,6 +70,36 @@ public class GenericCyberEntityTextRelationship
 	public static final int RT_VUMS_FUNAME = 29;	//vuln.ms & function.name
 
 	
+	public static HashMap<Integer,String> relationshipidTorelationshipname = new HashMap<Integer,String>();
+	static
+	{
+		relationshipidTorelationshipname.put(RT_SWVENDOR_SWPRODUCT, "SOFTWARE_VENDOR is vendor of SOFTWARE_PRODUCT");
+		relationshipidTorelationshipname.put(RT_SWVERSION_SWPRODUCT, "SOFTWARE_VERSION is version of SOFTWARE_PRODUCT");
+		relationshipidTorelationshipname.put(RT_VUDESCRIPTION_VUNAME, "VULNERABILITY_DESCRIPTION describes VULNERABILITY_NAME");
+		relationshipidTorelationshipname.put(RT_VUMS_VUNAME, "VULNERABILITY_MS_ID describes VULNERABILITY_NAME");
+		relationshipidTorelationshipname.put(RT_VUCVE_VUNAME, "VULNERABILITY_CVE_ID is named VULNERABILITY_NAME");
+		relationshipidTorelationshipname.put(RT_VUDESCRIPTION_VUMS, "VULNERABILITY_DESCRIPTION describes VULNERABILITY_MS_ID");
+		relationshipidTorelationshipname.put(RT_VUDESCRIPTION_VUCVE, "VULNERABILITY_DESCRIPTION describes CVE ID VULNERABILITY_CVE_ID");
+		relationshipidTorelationshipname.put(RT_VUCVE_VUMS, "VULNERABILITY_CVE_ID is ID for VULNERABILITY_MS_ID");
+		relationshipidTorelationshipname.put(RT_SWPRODUCT_VUNAME, "SOFTWARE_PRODUCT is vulnerable to VULNERABILITY_NAME");
+		relationshipidTorelationshipname.put(RT_SWPRODUCT_VUMS, "SOFTWARE_PRODUCT is vulnerable to VULNERABILITY_MS_ID");
+		relationshipidTorelationshipname.put(RT_SWPRODUCT_VUCVE, "SOFTWARE_PRODUCT is vulnerable to VULNERABILITY_CVE_ID");
+		relationshipidTorelationshipname.put(RT_SWVERSION_VUNAME, "SOFTWARE_VERSION is vulnerable to VULNERABILITY_NAME");
+		relationshipidTorelationshipname.put(RT_SWVERSION_VUMS, "SOFTWARE_VERSION is vulnerabile to VULNERABILITY_MS_ID");
+		relationshipidTorelationshipname.put(RT_SWVERSION_VUCVE, "SOFTWARE_VERSION is vulnerable to VULNERABILITY_CVE_ID");
+		relationshipidTorelationshipname.put(RT_SWPRODUCT_FINAME, "SOFTWARE_PRODUCT has vulnerability related to FILE_NAME");
+		relationshipidTorelationshipname.put(RT_SWVERSION_FINAME, "SOFTWARE_VERSION has a vulnerability related to FILE_NAME");
+		relationshipidTorelationshipname.put(RT_SWPRODUCT_FUNAME, "SOFTWARE_PRODUCT has a vulnerability in FUNCTION_NAME");
+		relationshipidTorelationshipname.put(RT_SWVERSION_FUNAME, "SOFTWARE_VERSION has a vulnerability in FUNCTION_NAME");
+		relationshipidTorelationshipname.put(RT_VUNAME_FINAME, "VULNERABILITY_NAME is related to FILE_NAME");
+		relationshipidTorelationshipname.put(RT_VUCVE_FINAME, "VULNERABILITY_CVE_ID is related to FILE_NAME");
+		relationshipidTorelationshipname.put(RT_VUMS_FINAME, "VULNERABILITY_MS_ID is related to FILE_NAME");
+		relationshipidTorelationshipname.put(RT_VUNAME_FUNAME, "VULNERABILITY_NAME is related to FUNCTION_NAME");
+		relationshipidTorelationshipname.put(RT_VUCVE_FUNAME, "VULNERABILITY_CVE_ID is related to FUNCTION_NAME");
+		relationshipidTorelationshipname.put(RT_VUMS_FUNAME, "VULNERABILITY_MS_ID is related to FUNCTION_NAME");
+	}
+	
+	
 	//Each entity type is associated with an int constant in CyberEntityText, and each relationship type
 	//is associated with an int constant above.  Given the ints associated with a pair of entities, this
 	//array stores the int associated with their relationship type.  Entries should be null if there
