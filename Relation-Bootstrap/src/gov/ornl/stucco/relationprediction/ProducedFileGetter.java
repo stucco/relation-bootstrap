@@ -75,16 +75,15 @@ public class ProducedFileGetter
 	//SVM training files
 	//entityextractedfilename is the name of the text file that has entities replaced with tokens.  
 	//getEntityExtractedText(String filename) will previously have been used to get this file for writing.
-	//contexts is a three digit code composed of 0s and 1s indicating which context windows are/were used to 
-	//generate the contents of the file.
-	public static File getRelationshipSVMInstancesFile(String entityextractedfilename, String contexts, int relationshiptype, boolean training)
+	//feature is a 1-letter code indicating the feature type.
+	public static File getRelationshipSVMInstancesFile(String entityextractedfilename, String feature, int relationshiptype, boolean training)
 	{
 		File dir = new File(producedfilesdirectory, "Testing/InstanceFiles/");
 		if(training)
 			dir = new File(producedfilesdirectory, "Training/InstanceFiles/");
 		dir.mkdirs();
 		
-		String filename = "RelationInstances." + entityextractedfilename + "." + contexts + "." + relationshiptype;
+		String filename = "RelationInstances." + entityextractedfilename + "." + feature + "." + relationshiptype;
 		
 		return new File(dir, filename);
 	}

@@ -1,3 +1,5 @@
+#Instructions for setting up the project
+
 The following instructions are necessary whether you want to train a new model for predicting relationships, or whether you just want to make new predictions using models that have already been trained:
 
 
@@ -63,7 +65,7 @@ The following step is optional depending on whether you also want to train a new
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 
-This program takes the output from the previous program and trains a word2vec model on it.  It then writes a text file called *wordvectors.original* , *wordvectors.aliasreplaced*, or *wordvectors.entityreplaced* into the *relation-bootstrap/ProducedFiles/Models/* directory, depending on which type of preprocessed document was named in the first command line argument.  This file that gets written contains the vectors learned for each word given the training data.
+This program takes the output from the previous program and trains a word2vec model on it.  It then writes a text file called *wordvectors.original*, *wordvectors.aliasreplaced*, or *wordvectors.entityreplaced* into the *relation-bootstrap/ProducedFiles/Models/* directory, depending on which type of preprocessed document was named in the first command line argument.  This file that gets written contains the vectors learned for each word given the training data.
 
 Note that this is a very time-expensive program to run.  It may take a week to complete.
 

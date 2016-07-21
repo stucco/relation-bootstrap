@@ -1,6 +1,7 @@
 package gov.ornl.stucco.relationprediction.Test;
 
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -47,13 +48,15 @@ public class Test
 	
 	public static void main(String[] args) throws Exception
 	{
-		countInstancesInDifferentClasses();
+		//findExamples();
+		
+		//countInstancesInDifferentClasses();
 		
 		//testZipReadingAndWriting();
 		
 		//testCurrentWorkingDirectory();
 		
-		//findNearestWords();
+		findNearestWords();
 		
 		//checkWorkingDirectories();
 		
@@ -408,6 +411,18 @@ public class Test
 	
 	private static void countInstancesInDifferentClasses() throws IOException
 	{
+		DecimalFormat formatter = new DecimalFormat(".0");
+		
+		
+		File testdirectory = ProducedFileGetter.getEntityExtractedSerializedDirectory(false);
+		int totaldocuments = testdirectory.listFiles().length;
+		System.out.println("Total Documents: " + totaldocuments);
+		
+		
+		//System.out.println("Relationship Name\tInstance Frequency Per Document\tFrequency of Labeled Instances that are Positive\tFrequency of Unknown Instances");
+		System.out.println("Relation Name\tPositive Count\tNegative Count\tUnknown Count");
+		
+		
 		for(int positiverelationtype : GenericCyberEntityTextRelationship.allpositiverelationshiptypesset)
 		{
 			int positivecount = 0;
@@ -457,13 +472,52 @@ public class Test
 			
 			
 			int totalcount = positivecount + negativecount + unknowncount;
-			System.out.println(GenericCyberEntityTextRelationship.relationshipidTorelationshipname.get(positiverelationtype));
-			System.out.println("Total instances: " + totalcount);
-			System.out.println("Positive frequency: " + (positivecount * 1.) / totalcount);
-			System.out.println("Negative frequency: " + (negativecount * 1.) / totalcount);
-			System.out.println("Unknown frequency: " + (unknowncount * 1.) / totalcount);
+			int labeledcount = positivecount + negativecount;
+			System.out.print(GenericCyberEntityTextRelationship.relationshipidTorelationshipname.get(positiverelationtype));
+			
+			
+			System.out.println("\t" + positivecount + "\t" + negativecount + "\t" + unknowncount);
+			
+			
+			/*
+			if(totaldocuments > 0)	//Frequency per document of all instances.
+				System.out.print("\t" + formatter.format(totalcount * 1. / totaldocuments));
+			else
+				System.out.print("\t0.0");
+			
+			if(labeledcount > 0)	//Frequency of positive instances / labeled instances.
+				System.out.print("\t" + formatter.format(positivecount * 100. / labeledcount) + "%");
+			else
+				System.out.print("\t?");
+			
+			if(totalcount > 0)	//Frequency of unknown instances / all instances.
+				System.out.print("\t" + formatter.format(unknowncount * 100. / totalcount) + "%");
+			else
+				System.out.print("\t?");
 			System.out.println();
+			*/
 		}
 	}
+	
+	private static void findExamples() throws IOException
+	{
+		File f = ProducedFileGetter.getRelationshipSVMInstancesFile("original", "111", 1, false);
+		
+		BufferedReader in = new BufferedReader(new FileReader(f));
+		String line;
+		while((line = in.readLine()) != null)
+		{
+			if(line.startsWith("0"))
+				continue;
+			if(line.contains("Trump"))
+				continue;
+			if(line.contains("Twitter"))
+				continue;
+			
+			System.out.println(line.substring(0, 2) + line.substring(line.indexOf('#')));
+		}
+		in.close();
+	}
+	
 	
 }

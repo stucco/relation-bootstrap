@@ -30,6 +30,7 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.Sentence;
 import edu.stanford.nlp.ling.CoreAnnotations.CharacterOffsetBeginAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.CharacterOffsetEndAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.IndexAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
@@ -98,13 +99,18 @@ public class PrintPreprocessedDocuments
 				continue;
 			
 			
+			aliassubstitutednamesout.write( ("###" + f.getAbsolutePath() + "###").getBytes());
+			completelyreplacednamesout.write( ("###" + f.getAbsolutePath() + "###").getBytes());
+			originalnamesout.write( ("###" + f.getAbsolutePath() + "###").getBytes());
+			unlemmatizednamesout.write( ("###" + f.getAbsolutePath() + "###").getBytes());
+			
+			
 			Annotation deserDoc = EntityLabeler.deserializeAnnotatedDoc(f.getAbsolutePath());
 			List<CoreMap> sentences = deserDoc.get(SentencesAnnotation.class);
 			for ( CoreMap sentence : sentences) 
 			{
 				List<CoreLabel> labels = sentence.get(TokensAnnotation.class);
-				if(labels.size() == 0)
-					continue;
+				
 				
 				int currententitystate = CyberEntityText.O;
 				int indexoffirsttokenhavingcurrentstate = 0;

@@ -20,7 +20,8 @@ class SentenceIterator(object):
             zipinternalfilename = zipthing.namelist()[0]    #The zip file contains only one file.
             with zipthing.open(zipinternalfilename, 'r') as f:
                 for line in f:
-                    yield line.split()
+                    if not ( line.startswith("###") and line.endswith("###") ):
+                        yield line.split()
                 
             
          

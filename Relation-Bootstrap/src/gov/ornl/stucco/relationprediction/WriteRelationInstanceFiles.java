@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.ArrayList;
@@ -24,25 +25,23 @@ import java.util.Enumeration;
 
 public class WriteRelationInstanceFiles
 {
-	public static String[] validcontexts = {"001", "010", "011", "100", "101", "110", "111"};
+	//public static String[] validcontexts = {"001", "010", "011", "100", "101", "110", "111"};
 	
 	private static String entityextractedfilename;
 	//private static String contexts;
 	private static boolean training = false;
 	
-	private static HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter;
+	private static String featuretype;
 	
 	
 	public static void main(String[] args)
 	{
 		readArgs(args);
 		
-		//Read in the saved word vectors
-		WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap(entityextractedfilename);
+		//It is kind of dumb to initialize all the printwriters at once right here, but it made sense in an old version of this program.
+		HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter = initializePrintWriters(featuretype);
 		
-		initializePrintWriters();
-		
-		buildAndWriteTrainingInstances(wvm);
+		buildAndWriteTrainingInstances(featuretype, relationtypeTocontextToprintwriter);
 		
 		//Close the file streams.
 		for(HashMap<String,PrintWriter> contextToprintwriter : relationtypeTocontextToprintwriter.values())
@@ -53,32 +52,35 @@ public class WriteRelationInstanceFiles
 	//Arguments: 
 	//1. extractedfilename (This is the name of the file written by PrintPreprocessedDocuments.  
 	//Valid known values for this argument are "original", "entityreplaced", and "aliasreplaced")
-	//2. contexts (This argument tells us whether or not we want to use the context
-	//preceding the first entity (first digit), whether or not we want to use the context between entities (second digit),
-	//and whether or not we want to use the context after the second entity (third digit).  Valid
-	//values for it are 000, 001, 010, 011, 100, 101, 110, or 111).
+	//2. featuretype (This code (1 character in length) encodes which feature type to build the
+	//file from.  To see available feature type character codes and their
+	//meanings, see FeatureMap.)
+	//3. training (optional).  If you include the word "training" in your command line arguments
+	//after the first two (required) feature types, training files (based on the .ser.gz contents
+	//of Training DataFiles directory) will be written.  Else testing files (based on the .ser.gz
+	//contents of Testing DataFiles directory) will be written.
 	private static void readArgs(String[] args)
 	{
 		entityextractedfilename = args[0];
+		featuretype = args[1];
 
-		for(int i = 1; i < args.length; i++)
+		for(int i = 2; i < args.length; i++)
 		{
 			if("training".equals(args[i]))
 				training = true;
 		}
 	}
 	
-	private static void initializePrintWriters()
+
+	private static HashMap<Integer,HashMap<String,PrintWriter>> initializePrintWriters(String feature)
 	{
-		relationtypeTocontextToprintwriter = new HashMap<Integer,HashMap<String,PrintWriter>>();
+		HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter = new HashMap<Integer,HashMap<String,PrintWriter>>();
 		
 		try
 		{
-			for(String context : validcontexts)
-			{
 				for(Integer i : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 				{
-					File f = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, context, i, training);
+					File f = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, feature, i, training);
 					
 					HashMap<String,PrintWriter> contextToprintwriter = relationtypeTocontextToprintwriter.get(i);
 					if(contextToprintwriter == null)
@@ -86,24 +88,34 @@ public class WriteRelationInstanceFiles
 						contextToprintwriter = new HashMap<String,PrintWriter>();
 						relationtypeTocontextToprintwriter.put(i, contextToprintwriter);
 					}
-					contextToprintwriter.put(context, new PrintWriter(new FileWriter(f)));
+					contextToprintwriter.put(feature, new PrintWriter(new FileWriter(f)));
 				}
-			}
 		}catch(IOException e)
 		{
 			System.out.println(e);
 			e.printStackTrace();
 			System.exit(3);
 		}
+		
+		return relationtypeTocontextToprintwriter;
 	}
+
 	
-	private static void buildAndWriteTrainingInstances(WordToVectorMap wvm)
+	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
 	{
+		gbt
+		
+		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
+			writeBeforeContextFile(featuretype, relationtypeTocontextToprintwriter);
+		
 		try
 		{
 			//Read the appropriate text file chosen as a command line argument.
 			//BufferedReader in = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText(entityextractedfilename)));
 
+			//Read in the saved word vectors
+			WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap(entityextractedfilename);
+			
 			//We are switching to using zip files for these because they could potentially be very big.
 			ZipFile zipfile = new ZipFile(ProducedFileGetter.getEntityExtractedText(entityextractedfilename, training));
 			ZipEntry entry = zipfile.entries().nextElement();
@@ -282,6 +294,8 @@ public class WriteRelationInstanceFiles
 			System.exit(3);
 		}
 	}
+	
+	
 	
 	
 	//This method takes a proposed relationship and a feature vector representation.  It checks 
