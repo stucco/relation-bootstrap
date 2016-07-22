@@ -110,6 +110,11 @@ public class CyberEntityText
 
 	public String getEntitySpacedText()
 	{
+		return getEntitySpacedText(entitytext);
+	}
+	
+	public static String getEntitySpacedText(String entitytext)
+	{
 		if(entitytext.startsWith("["))
 		{
 			String result = entitytext.toLowerCase();

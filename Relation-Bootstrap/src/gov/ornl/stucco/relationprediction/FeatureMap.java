@@ -5,9 +5,8 @@ import java.io.*;
 
 public class FeatureMap extends HashMap<String,Integer>
 {
-	//1.
-	//Feature Type Codes.  These don't really belong here, but they don't really belong anywhere else either.
-	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity.
+	//Warning: word embeddings only generate valid features for instances where both entities occur in the same sentence.
+	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity.	
 	public static final String WORDEMBEDDINGBETWEENCONTEXT = "b";	//Context between entities.
 	public static final String WORDEMBEDDINGAFTERCONTEXT = "c";	//Context after second entity.
 	

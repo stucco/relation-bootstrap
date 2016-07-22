@@ -99,18 +99,19 @@ public class PrintPreprocessedDocuments
 				continue;
 			
 			
-			aliassubstitutednamesout.write( ("###" + f.getAbsolutePath() + "###").getBytes());
-			completelyreplacednamesout.write( ("###" + f.getAbsolutePath() + "###").getBytes());
-			originalnamesout.write( ("###" + f.getAbsolutePath() + "###").getBytes());
-			unlemmatizednamesout.write( ("###" + f.getAbsolutePath() + "###").getBytes());
+			aliassubstitutednamesout.write( ("###" + f.getName() + "###\n").getBytes());
+			completelyreplacednamesout.write( ("###" + f.getName() + "###\n").getBytes());
+			originalnamesout.write( ("###" + f.getName() + "###\n").getBytes());
+			unlemmatizednamesout.write( ("###" + f.getName() + "###\n").getBytes());
 			
 			
 			Annotation deserDoc = EntityLabeler.deserializeAnnotatedDoc(f.getAbsolutePath());
 			List<CoreMap> sentences = deserDoc.get(SentencesAnnotation.class);
-			for ( CoreMap sentence : sentences) 
+			for (int sentencenum = 0; sentencenum < sentences.size(); sentencenum++) 
 			{
-				List<CoreLabel> labels = sentence.get(TokensAnnotation.class);
+				CoreMap sentence = sentences.get(sentencenum);
 				
+				List<CoreLabel> labels = sentence.get(TokensAnnotation.class);
 				
 				int currententitystate = CyberEntityText.O;
 				int indexoffirsttokenhavingcurrentstate = 0;
@@ -268,7 +269,7 @@ public class PrintPreprocessedDocuments
 		if(predictedtype == CyberEntityText.SWVERSION)
 		{
 			String lemma = token.get(LemmaAnnotation.class);
-			if(lemma.equals(".") || lemma.equals("version"))
+			if(lemma.equals(".") || lemma.equals("...") || lemma.equals("version"))
 				result = CyberEntityText.O;
 		}
 		
@@ -282,6 +283,26 @@ public class PrintPreprocessedDocuments
 		word = word.replaceAll("\\]", ")");
 		
 		return word;
+	}
+	
+	
+	public static int[] getOriginalTokenIndexesFromPreprocessedLine(String[] preprocessedline)
+	{
+		int[] result = new int[preprocessedline.length+1];
+		
+		int positioncounter = 0;
+		for(int i = 0; i < preprocessedline.length; i++)
+		{
+			result[i] = positioncounter;
+			
+			String originaltext = CyberEntityText.getEntitySpacedText(preprocessedline[i]);
+			String[] originaltokens = originaltext.split(" ");
+			
+			positioncounter += originaltokens.length;
+		}
+		result[preprocessedline.length] = positioncounter;
+		
+		return result;
 	}
 
 }

@@ -21,7 +21,8 @@ class SentenceIterator(object):
             with zipthing.open(zipinternalfilename, 'r') as f:
                 for line in f:
                     if not ( line.startswith("###") and line.endswith("###") ):
-                        yield line.split()
+                        #yield line.split(' ', 1)[1].split(' ')
+                        yield line.split(' ')
                 
             
          

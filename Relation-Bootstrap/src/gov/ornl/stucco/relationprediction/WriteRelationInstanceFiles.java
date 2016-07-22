@@ -25,8 +25,6 @@ import java.util.Enumeration;
 
 public class WriteRelationInstanceFiles
 {
-	//public static String[] validcontexts = {"001", "010", "011", "100", "101", "110", "111"};
-	
 	private static String entityextractedfilename;
 	//private static String contexts;
 	private static boolean training = false;
@@ -37,6 +35,8 @@ public class WriteRelationInstanceFiles
 	public static void main(String[] args)
 	{
 		readArgs(args);
+		
+		
 		
 		//It is kind of dumb to initialize all the printwriters at once right here, but it made sense in an old version of this program.
 		HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter = initializePrintWriters(featuretype);
@@ -101,18 +101,21 @@ public class WriteRelationInstanceFiles
 	}
 
 	
+	//Direct the flow to the method for writing the appropriate feature type.
 	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
 	{
-		gbt
-		
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
 			writeBeforeContextFile(featuretype, relationtypeTocontextToprintwriter);
-		
+		//if(featuretype.equals(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
+		//	writeMiddleContextFile(featuretype, relationtypeTocontextToprintwriter);
+		//if(featuretype.equals(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
+		//	writeAfterContextFile(featuretype, relationtypeTocontextToprintwriter);
+	}
+	
+	private static void writeBeforeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
+	{
 		try
 		{
-			//Read the appropriate text file chosen as a command line argument.
-			//BufferedReader in = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText(entityextractedfilename)));
-
 			//Read in the saved word vectors
 			WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap(entityextractedfilename);
 			
@@ -136,7 +139,10 @@ public class WriteRelationInstanceFiles
 			BufferedReader unlemmatizedalignedin = new BufferedReader(new InputStreamReader(zipfile3.getInputStream(entry3)));
 			
 			
-			int linecounter = 0;	//Keep track of the number of the line we are on in the file.  We'll make a note of what line our instances come from in this way.
+			//int linecounter = 0;	//Keep track of the number of the line we are on in the file.  We'll make a note of what line our instances come from in this way.
+			int sentencecounter = 0;
+			
+			String currentfilename = null;
 			
 			//Each line in this file is a single sentence.  Relationships can only be extracted if both 
 			//participating entities appear in the same sentence.  We do not do coreference resolution,
@@ -149,12 +155,24 @@ public class WriteRelationInstanceFiles
 				String unlemmatizedline = unlemmatizedalignedin.readLine();
 				
 				
-				linecounter++;
+				//linecounter++;
 				
 				
 				//The text files contain a blank line between documents.  Just ignore them.
 				if(line.length() == 0)
 					continue;
+				
+				if(line.startsWith("###") && line.endsWith("###"))
+				{
+					currentfilename = line.substring(3, line.length()-3);
+					sentencecounter = 0;
+					continue;
+				}
+				
+				
+				//These are the indices of the tokens in the original document (before we 
+				//replaced entities with representative tokens).
+				int[] originalindices = PrintPreprocessedDocuments.getOriginalTokenIndexesFromPreprocessedLine(unlemmatizedline.split(" "));
 				
 	
 				//Recall that, in the input file, a cyber entity is compressed into one token,
@@ -219,7 +237,10 @@ public class WriteRelationInstanceFiles
 									//Boolean isknownrelationship = relationship.isKnownRelationship();
 									Boolean isknownrelationship = aliasedrelationship.isKnownRelationship();
 									if(!(training && isknownrelationship == null))	//Do not bother to write instances with 0 labels.  isknownrelationship == null if the label would be 0 (we don't know the label).
-									{	
+									{
+											InstanceID instanceid = new InstanceID(currentfilename, sentencecounter, originalindices[i], originalindices[i+1], originalindices[j], originalindices[j+1]);
+										
+										
 											//Make a list of tokens in this context, then
 											//take the average of their corresponding vectors.
 											//Add the resulting vector to the concatenatedvector we are using 
@@ -228,51 +249,32 @@ public class WriteRelationInstanceFiles
 											double[] context1vector = wvm.getContextVector(context1);
 										
 											//Context between the entities.
-											String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
-											double[] context2vector = wvm.getContextVector(context2);
+											//String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
+											//double[] context2vector = wvm.getContextVector(context2);
 									
 											//Context after the entities.
-											String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
-											double[] context3vector = wvm.getContextVector(context3);
+											//String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
+											//double[] context3vector = wvm.getContextVector(context3);
 									
 									
-											for(String context : validcontexts)
-											{
-												PrintWriter pw = contextToprintwriter.get(context);
-											
-
-												//Construct the context
-												//vectors using the tokens in the appropriate context windows and
-												//the word vectors.  Concatenate all the chosen vectors into one
-												//feature vecture which we will use to represent the instance.
-												ArrayList<Double> concatenatedvectors = new ArrayList<Double>();
-												if(context.charAt(0) == '1')
-													for(double value : context1vector)
-														concatenatedvectors.add(value);
-												if(context.charAt(1) == '1')
-													for(double value : context2vector)
-														concatenatedvectors.add(value);
-												if(context.charAt(2) == '1')
-													for(double value : context3vector)
-														concatenatedvectors.add(value);
 											
 											
-												//Now, actually build the SVM_light style string representation of the instance.
-												String instanceline = buildSVMLightLine(isknownrelationship, concatenatedvectors);
+											//Now, actually build the SVM_light style string representation of the instance.
+											String instanceline = buildOutputLineFromVector(isknownrelationship, context1vector);
 										
 										
-												//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
-												//add the entity names to the end of the line.
-												if(training)
-													instanceline += " # " + linecounter;
-												else
-													instanceline += " # " + linecounter + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
+											//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
+											//add the entity names to the end of the line.
+											//if(training)
+											//	instanceline += " # " + instanceid;
+											//else
+												instanceline += " # " + instanceid + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
 										
 										
-												//And finally, print it to the appropriate file using the PrintWriter we 
-												//made earlier.
-												pw.println(instanceline);
-											}
+											//And finally, print it to the appropriate file using the PrintWriter we 
+											//made earlier.
+											PrintWriter pw = contextToprintwriter.get(featuretype);
+											pw.println(instanceline);
 										//}
 									}
 								}
@@ -280,6 +282,7 @@ public class WriteRelationInstanceFiles
 						}
 					}
 				}
+				sentencecounter++;
 			}
 			in.close();
 			aliasreplacedalignedin.close();
@@ -295,11 +298,7 @@ public class WriteRelationInstanceFiles
 		}
 	}
 	
-	
-	
-	
-	//This method takes a proposed relationship and a feature vector representation.  It checks 
-	public static String buildSVMLightLine(Boolean isknownrelationship, ArrayList<Double> contextvectors)
+ 	public static String buildOutputLineFromVector(Boolean isknownrelationship, double[] contextvectors)
 	{
 		String result = "";
 		if(isknownrelationship == null)
@@ -309,8 +308,8 @@ public class WriteRelationInstanceFiles
 		else
 			result += "-1";
 		
-		for(int i = 0; i < contextvectors.size(); i++)
-			result += " " + (i+1) + ":" + contextvectors.get(i);
+		for(int i = 0; i < contextvectors.length; i++)
+			result += " " + (i+1) + ":" + contextvectors[i];
 		
 		return result;
 	}
