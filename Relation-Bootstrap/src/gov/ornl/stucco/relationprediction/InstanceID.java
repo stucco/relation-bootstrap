@@ -1,21 +1,29 @@
 package gov.ornl.stucco.relationprediction;
 
+/*
+ * The purpose of this class is to store information about the entities from which an instance was generated.
+ * It includes the name of the file from which it came, the 
+ */
+
+
 public class InstanceID 
 {
 
 	private String filename;
-	private int sentencenum;
+	private int firsttokensentencenum;
 	private int firsttokenstartindex;
 	private int firsttokenendindex;
+	private int secondtokensentencenum;
 	private int secondtokenstartindex;
 	private int secondtokenendindex;
 	
-	InstanceID(String filename, int sentencenum, int firsttokenstartindex, int firsttokenendindex, int secondtokenstartindex, int secondtokenendindex)
+	InstanceID(String filename, int firsttokensentencenum, int firsttokenstartindex, int firsttokenendindex, int secondtokensentencenum, int secondtokenstartindex, int secondtokenendindex)
 	{
 		this.filename = filename;
-		this.sentencenum = sentencenum;
+		this.firsttokensentencenum = firsttokensentencenum;
 		this.firsttokenstartindex = firsttokenstartindex;
 		this.firsttokenendindex = firsttokenendindex;
+		this.secondtokensentencenum = secondtokensentencenum;
 		this.secondtokenstartindex = secondtokenstartindex;
 		this.secondtokenendindex = secondtokenendindex;
 	}
@@ -32,16 +40,22 @@ public class InstanceID
 		indices  = indices .replaceAll(",", " ");
 		
 		String[] indicesarray = indices.split(" ");
-		sentencenum = Integer.parseInt(indicesarray[0]);
+		firsttokensentencenum = Integer.parseInt(indicesarray[0]);
 		firsttokenstartindex = Integer.parseInt(indicesarray[1]);
 		firsttokenendindex = Integer.parseInt(indicesarray[2]);
-		secondtokenstartindex = Integer.parseInt(indicesarray[3]);
-		secondtokenendindex = Integer.parseInt(indicesarray[4]);
+		secondtokensentencenum = Integer.parseInt(indicesarray[3]);
+		secondtokenstartindex = Integer.parseInt(indicesarray[4]);
+		secondtokenendindex = Integer.parseInt(indicesarray[5]);
+	}
+
+	public int getFirstTokenSentenceNum()
+	{
+		return firsttokensentencenum;
 	}
 	
 	public String toString()
 	{
-		return filename + "-" + sentencenum + "(" + firsttokenstartindex + "," + firsttokenendindex + ")" + 
-				"(" + secondtokenstartindex + "," + secondtokenendindex + ")";
+		return filename + "-(" + firsttokensentencenum + "," + firsttokenstartindex + "," + firsttokenendindex + ")" + 
+				"(" + secondtokensentencenum + "," + secondtokenstartindex + "," + secondtokenendindex + ")";
 	}
 }

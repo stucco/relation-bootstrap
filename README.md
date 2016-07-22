@@ -76,11 +76,12 @@ Note that this is a very time-expensive program to run.  It may take a week to c
 
 #### Run this program:
 
-	WriteRelationInstanceFiles preprocessedtype training
+	java gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode training
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
-
-This program takes the output of the previous two programs to write a lot of data files for relationship SVM classifiers.  preprocessedtype tells the program which output files written by the previous two programs to use.
+	featuretypecode = Any implemented feature type code listed in FeatureMap.java.
+	
+This program takes the output of the previous two programs to write a lot of data files for relationship SVM classifiers.  preprocessedtype tells the program which output files written by the previous two programs to use.  featuretype tells the program which one type of feature to use to represent the instances.  You can see a list of available feature type codes near the top of FeatureMap.java.  If you intend to run an experiment using several feature types, you must run this program once for each of the feature types you want to use.
 
 
 ---
@@ -89,11 +90,13 @@ This program takes the output of the previous two programs to write a lot of dat
 
 #### Run this program:
 
-	RunRelationSVMs preprocessedtype training
+	RunRelationSVMs preprocessedtype featuretypecodes
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
+	featuretypecodes = a list of unseparated feature type codes from FeatureMap.java.
 
 This program takes the instance data written by the previous program, trains a SVM on it, and applies the SVM to a test set.  Also, for each possible combination of parameter settings, it writes an SVM model file to the disk so that this model can later be used to make predictions.  It will not run properly unless WriteRelationInstanceFiles has been run using the same preprocessedtype parameter.
+featuretypecodes tells the program which sets of features to use to represent an instance.  The codes are each a single character in length, and featuretypecodes is a lost of these characters without any separator between them. 
  
 Note that this is a very time-expensive program to run.  It may take a week to complete.
 

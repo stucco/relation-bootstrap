@@ -304,5 +304,15 @@ public class PrintPreprocessedDocuments
 		
 		return result;
 	}
+	
+	
+	public static boolean isFileNameLine(String line)
+	{
+		return line.startsWith("###") && line.endsWith("###");
+	}
+	public static boolean isLineBetweenDocuments(String line)
+	{
+		return line.equals("");
+	}
 
 }

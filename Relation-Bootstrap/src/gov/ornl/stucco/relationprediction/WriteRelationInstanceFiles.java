@@ -15,6 +15,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.zip.ZipEntry;
@@ -30,6 +31,9 @@ public class WriteRelationInstanceFiles
 	private static boolean training = false;
 	
 	private static String featuretype;
+	
+	
+	private static DecimalFormat formatter = new DecimalFormat(".0000");
 	
 	
 	public static void main(String[] args)
@@ -105,14 +109,14 @@ public class WriteRelationInstanceFiles
 	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
 	{
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
-			writeBeforeContextFile(featuretype, relationtypeTocontextToprintwriter);
-		//if(featuretype.equals(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
-		//	writeMiddleContextFile(featuretype, relationtypeTocontextToprintwriter);
-		//if(featuretype.equals(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
-		//	writeAfterContextFile(featuretype, relationtypeTocontextToprintwriter);
+			writeContextFile(featuretype, relationtypeTocontextToprintwriter);
+		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
+			writeContextFile(featuretype, relationtypeTocontextToprintwriter);
+		if(featuretype.equals(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
+			writeContextFile(featuretype, relationtypeTocontextToprintwriter);
 	}
 	
-	private static void writeBeforeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
+	private static void writeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
 	{
 		try
 		{
@@ -238,36 +242,45 @@ public class WriteRelationInstanceFiles
 									Boolean isknownrelationship = aliasedrelationship.isKnownRelationship();
 									if(!(training && isknownrelationship == null))	//Do not bother to write instances with 0 labels.  isknownrelationship == null if the label would be 0 (we don't know the label).
 									{
-											InstanceID instanceid = new InstanceID(currentfilename, sentencecounter, originalindices[i], originalindices[i+1], originalindices[j], originalindices[j+1]);
+											InstanceID instanceid = new InstanceID(currentfilename, sentencecounter, originalindices[i], originalindices[i+1], sentencecounter, originalindices[j], originalindices[j+1]);
 										
 										
 											//Make a list of tokens in this context, then
 											//take the average of their corresponding vectors.
 											//Add the resulting vector to the concatenatedvector we are using 
 											//for our feature representation.
-											String[] context1 = Arrays.copyOfRange(tokens, 0, i);
-											double[] context1vector = wvm.getContextVector(context1);
-										
-											//Context between the entities.
-											//String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
-											//double[] context2vector = wvm.getContextVector(context2);
-									
+											double[] contextvector = null;
+											if(featuretype.contains(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
+											{
+												//Context before the first entity.
+												String[] context1 = Arrays.copyOfRange(tokens, 0, i);
+												contextvector = wvm.getContextVector(context1);
+											}
+											else if(featuretype.contains(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
+											{
+												//Context between the entities.
+												String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
+												contextvector = wvm.getContextVector(context2);
+											}
+											else if(featuretype.contains(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
+											{
 											//Context after the entities.
-											//String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
-											//double[] context3vector = wvm.getContextVector(context3);
+												String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
+												contextvector = wvm.getContextVector(context3);
+											}
 									
 									
 											
 											
 											//Now, actually build the SVM_light style string representation of the instance.
-											String instanceline = buildOutputLineFromVector(isknownrelationship, context1vector);
+											String instanceline = buildOutputLineFromVector(isknownrelationship, contextvector);
 										
 										
 											//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
 											//add the entity names to the end of the line.
-											//if(training)
-											//	instanceline += " # " + instanceid;
-											//else
+											if(training)
+												instanceline += " # " + instanceid;
+											else
 												instanceline += " # " + instanceid + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
 										
 										
@@ -309,7 +322,7 @@ public class WriteRelationInstanceFiles
 			result += "-1";
 		
 		for(int i = 0; i < contextvectors.length; i++)
-			result += " " + (i+1) + ":" + contextvectors[i];
+			result += " " + (i+1) + ":" + formatter.format(contextvectors[i]);
 		
 		return result;
 	}

@@ -34,13 +34,14 @@ public class RunRelationSVMs
 	
 	
 	private static double[] cs = { 100., 1000., 10000., 100000};
-	private static double[] gammas = { .001, .01, .1, 1., 10., 100. };
+	private static double[] gammas = { .001, .01, .1, 1., 10.};
 	private static String[] kerneltypes = {"Linear", "RBF"};
 	
 	
 	private static String entityextractedfilename;
 	//private static String contexts;
 	//private static boolean training = false;
+	private static String featuretypes;
 	
 	
 	//private static int folds = 5;
@@ -74,9 +75,8 @@ public class RunRelationSVMs
 			if(testingprogram && !(relationtype == 1 || relationtype == -1))
 				continue;
 			
+				FeatureMap featuremap = FeatureMap.constructFeatureMap(entityextractedfilename, featuretypes, relationtype);
 			
-			for(String context : WriteRelationInstanceFiles.validcontexts)
-			{
 				PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, relationtype, true)));
 			
 				//In order to do cross-validation, we need to set aside two folds for tuning parameters and testing.  So testfold1 and testfold2 will be those folds.  All the other folds can be used for training.
@@ -97,7 +97,7 @@ public class RunRelationSVMs
 					
 					
 						//Write the training data to a temporary file.  Since testing is, by comparison, super fast, run testing too.
-						writeSVMFiles(relationtype, testfold1, testfold2, entityextractedfilename, context, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
+						writeSVMFiles(featuremap, relationtype, testfold1, testfold2, entityextractedfilename, featuretypes, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
 						
 					
 						//Our SVMs have two parameters, c and gamma.  Iterate over all combinations of them so that we can do a grid search. (Gamma is not needed for linear kernels, so we set the gammas array to have only one value in readArgs() if the kernel type chosen was Linear).
@@ -107,7 +107,7 @@ public class RunRelationSVMs
 							{
 								for(double gamma : gammas)
 								{
-									File modelfile = ProducedFileGetter.getSVMModelFile(kerneltype, entityextractedfilename, context, relationtype, testfold1, testfold2, c, gamma);
+									File modelfile = ProducedFileGetter.getSVMModelFile(kerneltype, entityextractedfilename, featuretypes, relationtype, testfold1, testfold2, c, gamma);
 							
 									String line;
 									if(!modelfile.exists() || alwaysretrain)
@@ -136,7 +136,7 @@ public class RunRelationSVMs
 									t1process.waitFor();
 							
 									//And print the resulting classified instances to a result file.
-									printResultsFile(testfold1 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + context, testresultsout, testfile1, testfile1comments, testpredictionsfile1);
+									printResultsFile(testfold1 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "featuretypes=" + featuretypes, testresultsout, testfile1, testfile1comments, testpredictionsfile1);
 							
 							
 									//Recall that we left two folds out of the training set.  If those two folds are not the same, also apply the model to and print the results from the other fold.
@@ -149,7 +149,7 @@ public class RunRelationSVMs
 											System.out.println(line);
 										t2process.waitFor();
 								
-										printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + context, testresultsout, testfile2, testfile2comments, testpredictionsfile2);
+										printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "featuretypes=" + featuretypes, testresultsout, testfile2, testfile2comments, testpredictionsfile2);
 									}
 							
 									//We only care about the predictions in most cases.  We need to save the model only when we are training on the entire dataset because that model may be used to make real predictions for stucco.
@@ -161,7 +161,6 @@ public class RunRelationSVMs
 					}
 				}
 				testresultsout.close();
-			}
 		}
 		
 		
@@ -185,6 +184,8 @@ public class RunRelationSVMs
 			System.exit(3);
 		}
 		
+		featuretypes = FeatureMap.getOrderedFeatureTypes(args[1]);
+		
 		//contexts = args[1];
 		//if(contexts.length() != 3 || 
 		//		!(contexts.charAt(0) == '0' || contexts.charAt(0) == '1') ||
@@ -201,10 +202,12 @@ public class RunRelationSVMs
 		//		training = true;
 		//}
 	}
+		
 	
-	
-	private static void writeSVMFiles(int relationtype, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String contexts, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
+	private static void writeSVMFiles(FeatureMap featuremap, int relationtype, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String featuretypes, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
 	{
+		gbt 
+		
 		File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, relationtype, true);
 	
 		try
@@ -274,8 +277,9 @@ public class RunRelationSVMs
 		String[] splitline = instanceline.split("#");
 		String linecomment = splitline[1];
 		//String sentencenumstring = linecomment.substring(1, linecomment.indexOf(' ', 1));
-		String sentencenumstring = linecomment.trim();
-		int sentencenum = Integer.parseInt(sentencenumstring);
+		String instanceidstring = linecomment.trim().split(" ")[0];
+		InstanceID iid = new InstanceID(instanceidstring);
+		int sentencenum = iid.getFirstTokenSentenceNum();
 		
 		int modnum = sentencenum % (folds.length - 1);
 		
@@ -304,7 +308,6 @@ public class RunRelationSVMs
 	}
 	
 	
-
 	//We used the SVM to classify test instances in the main method, but we have not stored the resulting predictions in a useful way yet.  So do that.
 	public static void printResultsFile(String firstline, PrintWriter resultsout, File testdatafile, File testcommentsfile, File testpredictionsfile) throws IOException
 	{

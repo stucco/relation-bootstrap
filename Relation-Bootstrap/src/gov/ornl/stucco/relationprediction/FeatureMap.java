@@ -121,5 +121,50 @@ public class FeatureMap extends HashMap<String,Integer>
 		return result;
 	}
 
+	//This method reads all the training instance files associated with a particular entityextracted type and each feature type
+	//and maps each feature to a unique integer in a new FeatureMap.
+	public static FeatureMap constructFeatureMap(String entityextractedfilename, String featuretypes, int relationtype)
+	{
+		FeatureMap featuremap = new FeatureMap();
+		
+		for(int i = 0; i < featuretypes.length(); i++)
+		{
+			String featuretype = featuretypes.charAt(i) + "";
+			File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, featuretype, relationtype, true);
+			
+			try
+			{
+				BufferedReader in = new BufferedReader(new FileReader(relationinstancesfile));
+				String instanceline;
+				while((instanceline = in.readLine()) != null)
+				{
+					if(PrintPreprocessedDocuments.isLineBetweenDocuments(instanceline) || PrintPreprocessedDocuments.isFileNameLine(instanceline))
+						continue;
+					
+					
+					String[] splitline = instanceline.split("#");
+					String[] classAndfeatures = splitline[0].trim().split(" ");
+					for(int j = 1; j < classAndfeatures.length; j++)
+					{
+						String featurenameAndvalue = classAndfeatures[j];
+						String featurename = featurenameAndvalue.substring(0, featurenameAndvalue.lastIndexOf(':'));
+						//double value = Double.parseDouble(featurenameAndvalue.substring(featurenameAndvalue.lastIndexOf(':')+1));
+						featurename = featuretype + ":" + featurename;
+						
+						featuremap.getIndex(featurename, featuretype);	//Just by getting the index, we add the feature to the map.  So don't need to do anything with it.
+					}
+					
+				}
+				in.close();
+			}catch(IOException e)
+			{
+				System.out.println(e);
+				e.printStackTrace();
+				System.exit(3);
+			}
+		}
+		
+		return featuremap;
+	}
 
 }
