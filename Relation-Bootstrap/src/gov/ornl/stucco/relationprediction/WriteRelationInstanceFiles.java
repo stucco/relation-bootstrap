@@ -40,12 +40,12 @@ public class WriteRelationInstanceFiles
 	{
 		readArgs(args);
 		
-		
-		
 		//It is kind of dumb to initialize all the printwriters at once right here, but it made sense in an old version of this program.
 		HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter = initializePrintWriters(featuretype);
 		
-		buildAndWriteTrainingInstances(featuretype, relationtypeTocontextToprintwriter);
+		HashMap<Integer, ArrayList<InstanceID>> relationtypeToinstanceidorder = InstanceID.readRelationTypeToInstanceIDOrder(entityextractedfilename, training);
+		
+		buildAndWriteTrainingInstances(featuretype, relationtypeTocontextToprintwriter, relationtypeToinstanceidorder);
 		
 		//Close the file streams.
 		for(HashMap<String,PrintWriter> contextToprintwriter : relationtypeTocontextToprintwriter.values())
@@ -106,203 +106,127 @@ public class WriteRelationInstanceFiles
 
 	
 	//Direct the flow to the method for writing the appropriate feature type.
-	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
+	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
 	{
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
-			writeContextFile(featuretype, relationtypeTocontextToprintwriter);
+			writeContextFile(featuretype, relationtypeTocontextToprintwriter, relationtypeToinstanceidorder);
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
-			writeContextFile(featuretype, relationtypeTocontextToprintwriter);
+			writeContextFile(featuretype, relationtypeTocontextToprintwriter, relationtypeToinstanceidorder);
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
-			writeContextFile(featuretype, relationtypeTocontextToprintwriter);
+			writeContextFile(featuretype, relationtypeTocontextToprintwriter, relationtypeToinstanceidorder);
 	}
 	
-	private static void writeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
+	private static void writeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
 	{
+		//Read in the saved word vectors
+		WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap(entityextractedfilename);
+		
 		try
 		{
-			//Read in the saved word vectors
-			WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap(entityextractedfilename);
-			
 			//We are switching to using zip files for these because they could potentially be very big.
 			ZipFile zipfile = new ZipFile(ProducedFileGetter.getEntityExtractedText(entityextractedfilename, training));
 			ZipEntry entry = zipfile.entries().nextElement();
-		    BufferedReader in = new BufferedReader(new InputStreamReader(zipfile.getInputStream(entry)));
-	
-		
-			//The original text should align exactly, token-for-token, with either of the other two text types.
-			//BufferedReader aliasalignedin = new BufferedReader(new FileReader(ProducedFileGetter.getEntityExtractedText("original")));
-			
-		    //We are switching to using zip files for these because they could potentially be very big.
-			ZipFile zipfile2 = new ZipFile(ProducedFileGetter.getEntityExtractedText("aliasreplaced", training));
-			ZipEntry entry2 = zipfile2.entries().nextElement();
-		    BufferedReader aliasreplacedalignedin = new BufferedReader(new InputStreamReader(zipfile2.getInputStream(entry2)));
-			
-		    //We are switching to using zip files for these because they could potentially be very big.
+			BufferedReader in = new BufferedReader(new InputStreamReader(zipfile.getInputStream(entry)));
+
+			//We are switching to using zip files for these because they could potentially be very big.
 			ZipFile zipfile3 = new ZipFile(ProducedFileGetter.getEntityExtractedText("unlemmatized", training));
 			ZipEntry entry3 = zipfile3.entries().nextElement();
 			BufferedReader unlemmatizedalignedin = new BufferedReader(new InputStreamReader(zipfile3.getInputStream(entry3)));
-			
-			
-			//int linecounter = 0;	//Keep track of the number of the line we are on in the file.  We'll make a note of what line our instances come from in this way.
-			int sentencecounter = 0;
-			
-			String currentfilename = null;
-			
-			//Each line in this file is a single sentence.  Relationships can only be extracted if both 
-			//participating entities appear in the same sentence.  We do not do coreference resolution,
-			//so each entity must be mentioned by name (it cannot be replaced with a pronoun).
-			String line;
-			while((line = in.readLine()) != null)
+		
+		
+			for(Integer relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 			{
-				//Read the corresponding line from the alias replaced text file.
-				String aliasedline = aliasreplacedalignedin.readLine();
-				String unlemmatizedline = unlemmatizedalignedin.readLine();
-				
-				
-				//linecounter++;
-				
-				
-				//The text files contain a blank line between documents.  Just ignore them.
-				if(line.length() == 0)
-					continue;
-				
-				if(line.startsWith("###") && line.endsWith("###"))
+				PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(featuretype);
+			
+				ArrayList<InstanceID> instanceidorder = new ArrayList<InstanceID>(relationtypeToinstanceidorder.get(relationtype));
+				while(instanceidorder.size() > 0)
 				{
-					currentfilename = line.substring(3, line.length()-3);
-					sentencecounter = 0;
-					continue;
-				}
+					String desiredfilename = instanceidorder.get(0).getFileName();
 				
+					ArrayList<String[]> filelines = getLinesAssociatedWithOneFile(desiredfilename, in, zipfile, entry);
+					ArrayList<String[]> unlemmatizedfilelines = getLinesAssociatedWithOneFile(desiredfilename, unlemmatizedalignedin, zipfile3, entry3);
 				
-				//These are the indices of the tokens in the original document (before we 
-				//replaced entities with representative tokens).
-				int[] originalindices = PrintPreprocessedDocuments.getOriginalTokenIndexesFromPreprocessedLine(unlemmatizedline.split(" "));
+					//These are the indices of the tokens in the original document (before we 
+					//replaced entities with representative tokens).
+					ArrayList<int[]> originalindices = new ArrayList<int[]>();
+					for(String[] sentence : unlemmatizedfilelines)
+						originalindices.add(PrintPreprocessedDocuments.getOriginalTokenIndexesFromPreprocessedLine(sentence));
 				
-	
-				//Recall that, in the input file, a cyber entity is compressed into one token,
-				//even though in the source text, it may have been several tokens long.
-				String[] tokens = line.split(" ");
-				
-				
-				//And keep track of the alias replaced tokens the normal tokens correspond to.
-				String[] aliasreplacedtokens = aliasedline.split(" ");
-				String[] unlemmatizedtokens = unlemmatizedline.split(" ");
-				
-				
-				//The text file we are reading is already annotated with cyber entities.
-				//Here, we are constructing an array of CyberEntityTexts parallel to 
-				//the tokens array that tells us the token's Cyber entity label (if it has one).
-				CyberEntityText[] cyberentitytexts = new CyberEntityText[tokens.length];
-				CyberEntityText[] aliasedcyberentitytexts = new CyberEntityText[tokens.length];
-				CyberEntityText[] unlemmatizedcyberentitytexts = new CyberEntityText[tokens.length];
-				for(int i = 0; i < tokens.length; i++)
-				{
-					cyberentitytexts[i] = CyberEntityText.getCyberEntityTextFromToken(tokens[i]);
-					aliasedcyberentitytexts[i] = CyberEntityText.getCyberEntityTextFromToken(aliasreplacedtokens[i]);
-					unlemmatizedcyberentitytexts[i] = CyberEntityText.getCyberEntityTextFromToken(unlemmatizedtokens[i]);
-				}
-				
-				//Now, we scan through each pair of tokens.  If both are cyber entities...
-				for(int i = 0; i < tokens.length; i++)
-				{
-					if(cyberentitytexts[i] != null)
+					while(instanceidorder.size() > 0 && instanceidorder.get(0).getFileName().equals(desiredfilename))
 					{
-						for(int j = i+1; j < tokens.length; j++)
+						InstanceID instanceid = instanceidorder.remove(0);
+					
+						int firsttokensentencenum = instanceid.getFirstTokenSentenceNum();
+						int replacedfirsttokenindex = instanceid.getReplacedFirstTokenIndex();
+						int secondtokensentencenum = instanceid.getSecondTokenSentenceNum();
+						int replacedsecondtokenindex = instanceid.getReplacedSecondTokenIndex();
+					
+						String[] firstsentence = filelines.get(firsttokensentencenum);
+						String[] firsttokenunlemmatizedsentence = unlemmatizedfilelines.get(firsttokensentencenum);
+						String[] secondsentence = filelines.get(secondtokensentencenum);
+						String[] secondtokenunlemmatizedsentence = unlemmatizedfilelines.get(secondtokensentencenum);
+					
+						ArrayList<String> context = new ArrayList<String>();
+						if(featuretype.equals(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
 						{
-							if(cyberentitytexts[j] != null)
+							for(int i = 0; i < replacedfirsttokenindex; i++)
+								context.add(firstsentence[i]);
+						}
+						if(featuretype.equals(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
+						{
+							for(int i = replacedsecondtokenindex+1; i < secondsentence.length; i++)
+								context.add(secondsentence[i]);
+						}
+						if(featuretype.equals(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
+						{
+							if(firsttokensentencenum == secondtokensentencenum)
 							{
-								//...we construct a relationship instance from them.
-								GenericCyberEntityTextRelationship relationship = new GenericCyberEntityTextRelationship(cyberentitytexts[i], cyberentitytexts[j]);
-								GenericCyberEntityTextRelationship aliasedrelationship = new GenericCyberEntityTextRelationship(aliasedcyberentitytexts[i], aliasedcyberentitytexts[j]);
-								GenericCyberEntityTextRelationship unlemmatizedrelationship = new GenericCyberEntityTextRelationship(unlemmatizedcyberentitytexts[i], unlemmatizedcyberentitytexts[j]);
-								
-								
-								//Any pair of entities of any types can be used to construct a relationship instance.
-								//But we only care about a subset of all possible relationship types.  In particular, 
-								//we care about the relationships ennumerated at the top of GenericCyberEntityTextRelationship
-								//(or their reverses, where the entities appear in the reverse of the normal order
-								//in the text).  So check if this entity pair's relationship type is one of the 
-								//types we care about.  Since we only built print writers for the types we cared about 
-								//earlier in the program, we check for this condition by checking if we constructed a 
-								//PrintWriter for this relationship.
-								Integer relationtype = aliasedrelationship.getRelationType();
-								
-								
-								HashMap<String,PrintWriter> contextToprintwriter = relationtypeTocontextToprintwriter.get(relationtype);
-								if(contextToprintwriter != null)
+								for(int i = replacedfirsttokenindex+1; i < replacedsecondtokenindex; i++)
+									context.add(firstsentence[i]);
+							}
+							else
+							{
+								for(int i = replacedfirsttokenindex+1; i < firstsentence.length; i++)
+									context.add(firstsentence[i]);
+								for(int i = 0; i < replacedsecondtokenindex; i++)
+									context.add(secondsentence[i]);
+								for(int sentencenum = firsttokensentencenum + 1; sentencenum < secondtokensentencenum; sentencenum++)
 								{
-									//If we do care about this relationship type, check whether
-									//we can label this relationship confidently enough to
-									//use it as a training instance.
-									//(There is a comment above GenericCyberEntityTextRelationship.isKnownRelationship()
-									//explaining our rules for making this determination.)
-									//Use the aliased version of the relationship to check for this because
-									//its contents are easiest to align with known entities.
-									//Boolean isknownrelationship = relationship.isKnownRelationship();
-									Boolean isknownrelationship = aliasedrelationship.isKnownRelationship();
-									if(!(training && isknownrelationship == null))	//Do not bother to write instances with 0 labels.  isknownrelationship == null if the label would be 0 (we don't know the label).
-									{
-											InstanceID instanceid = new InstanceID(currentfilename, sentencecounter, originalindices[i], originalindices[i+1], sentencecounter, originalindices[j], originalindices[j+1]);
-										
-										
-											//Make a list of tokens in this context, then
-											//take the average of their corresponding vectors.
-											//Add the resulting vector to the concatenatedvector we are using 
-											//for our feature representation.
-											double[] contextvector = null;
-											if(featuretype.contains(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
-											{
-												//Context before the first entity.
-												String[] context1 = Arrays.copyOfRange(tokens, 0, i);
-												contextvector = wvm.getContextVector(context1);
-											}
-											else if(featuretype.contains(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
-											{
-												//Context between the entities.
-												String[] context2 = Arrays.copyOfRange(tokens, i+1, j);
-												contextvector = wvm.getContextVector(context2);
-											}
-											else if(featuretype.contains(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
-											{
-											//Context after the entities.
-												String[] context3 = Arrays.copyOfRange(tokens, j, tokens.length);
-												contextvector = wvm.getContextVector(context3);
-											}
-									
-									
-											
-											
-											//Now, actually build the SVM_light style string representation of the instance.
-											String instanceline = buildOutputLineFromVector(isknownrelationship, contextvector);
-										
-										
-											//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
-											//add the entity names to the end of the line.
-											if(training)
-												instanceline += " # " + instanceid;
-											else
-												instanceline += " # " + instanceid + " " + i + " " + unlemmatizedrelationship.getFirstEntity().getEntityText() + " " + relationship.getFirstEntity().getEntityText() + " " + j + " " + unlemmatizedrelationship.getSecondEntity().getEntityText() + " " + relationship.getSecondEntity().getEntityText() + " " + unlemmatizedline;
-										
-										
-											//And finally, print it to the appropriate file using the PrintWriter we 
-											//made earlier.
-											PrintWriter pw = contextToprintwriter.get(featuretype);
-											pw.println(instanceline);
-										//}
-									}
+									String[] sentence = filelines.get(sentencenum);
+									for(String word : sentence)
+										context.add(word);
 								}
 							}
 						}
+					
+						//Now, actually build the SVM_light style string representation of the instance.
+						String instanceline = buildOutputLineFromVector(instanceid.getHeuristicLabel(), wvm.getContextVector(context));
+				
+				
+						//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
+						//add the entity names to the end of the line.
+						if(training)
+						instanceline += " # " + instanceid;
+						else
+						{
+							String unlemmatizedtokens = "";
+							for(int i = firsttokensentencenum; i <= secondtokensentencenum; i++)
+							{
+								String[] unlemmatizedline = unlemmatizedfilelines.get(i);
+								for(String unlemmatizedword : unlemmatizedline)
+									unlemmatizedtokens += " " + unlemmatizedword;
+							}
+							
+							instanceline += " # " + instanceid + " " + firsttokensentencenum + " " + firsttokenunlemmatizedsentence[replacedfirsttokenindex] + " " + firstsentence[replacedfirsttokenindex] + " " + secondtokensentencenum + " " + secondtokenunlemmatizedsentence[replacedsecondtokenindex] + " " + secondsentence[replacedsecondtokenindex] + " " + unlemmatizedtokens.trim();
+						}
+				
+						//And finally, print it to the appropriate file using the PrintWriter we 
+						//made earlier.
+						out.println(instanceline);
+					//}
 					}
 				}
-				sentencecounter++;
 			}
-			in.close();
-			aliasreplacedalignedin.close();
-			unlemmatizedalignedin.close();
-			zipfile.close();
-			zipfile2.close();
-			zipfile3.close();
 		}catch(IOException e)
 		{
 			System.out.println(e);
@@ -310,6 +234,7 @@ public class WriteRelationInstanceFiles
 			System.exit(3);
 		}
 	}
+	
 	
  	public static String buildOutputLineFromVector(Boolean isknownrelationship, double[] contextvectors)
 	{
@@ -326,7 +251,73 @@ public class WriteRelationInstanceFiles
 		
 		return result;
 	}
+ 	
+ 	public static String buildOutputLineFromVector(int label, double[] contextvectors)
+ 	{
+ 		if(label == -1)
+ 			return buildOutputLineFromVector(false, contextvectors);
+ 		else if(label == 1)
+ 			return buildOutputLineFromVector(true, contextvectors);
+ 		else if(label == 0)
+ 			return buildOutputLineFromVector(null, contextvectors);
+
+		return null;
+ 	}
 	
+ 	
+ 	public static ArrayList<String[]> getLinesAssociatedWithOneFile(String desiredfilename, BufferedReader in, ZipFile zipfile, ZipEntry entry)
+ 	{
+ 		ArrayList<String[]> resultlines = new ArrayList<String[]>();
+ 		
+ 		
+ 		try
+ 		{
+ 			try{in.ready();}
+ 			catch(IOException e){in = new BufferedReader(new InputStreamReader(zipfile.getInputStream(entry)));}
+ 			
+ 			
+ 			String line;
+ 			while((line = in.readLine()) != null)
+ 			{
+				if(line.startsWith("###") && line.endsWith("###"))
+				{
+					String currentfilename = line.substring(3, line.length()-3);
+					if(currentfilename.equals(desiredfilename))
+					{
+						while(!(line = in.readLine()).equals(""))
+							resultlines.add(line.split(" "));
+						break;
+					}
+				}
+ 			}
+ 			
+ 			if(resultlines.size() == 0)
+ 			{
+ 				in.close();
+	    		in = new BufferedReader(new InputStreamReader(zipfile.getInputStream(entry)));
+	 			while((line = in.readLine()) != null)
+	 			{
+					if(line.startsWith("###") && line.endsWith("###"))
+					{
+						String currentfilename = line.substring(3, line.length()-3);
+						if(currentfilename.equals(desiredfilename))
+						{
+							while(!(line = in.readLine()).equals(""))
+								resultlines.add(line.split(" "));
+							break;
+						}
+					}
+	 			}
+ 			}
+ 		}catch(IOException e)
+ 		{
+ 			System.out.println(e);
+ 			e.printStackTrace();
+ 			System.exit(3);
+ 		}
+ 		
+ 		return resultlines;
+ 	}
 	
 	
 }

@@ -49,6 +49,7 @@ public class ProducedFileGetter
 		}
 	}
 	
+	private static int tempfilecounter = 0;
 	
 	
 	//The file containing a vector for each word in our vocabulary.  This file is written by the Python program TrainModel.py.
@@ -84,6 +85,21 @@ public class ProducedFileGetter
 		dir.mkdirs();
 		
 		String filename = "RelationInstances." + entityextractedfilename + "." + feature + "." + relationshiptype;
+		
+		return new File(dir, filename);
+	}
+	
+	//In order to keep all instances in the same order in their instance files (so that the files
+	//for individual features will correspond well enough that we do not have to keep much in 
+	//memory), make a file that tells the order instances must be listed in.
+	public static File getRelationshipSVMInstancesOrderFile(String entityextractedfilename, int relationshiptype, boolean training)
+	{
+		File dir = new File(producedfilesdirectory, "Testing/InstanceFiles/");
+		if(training)
+			dir = new File(producedfilesdirectory, "Training/InstanceFiles/");
+		dir.mkdirs();
+		
+		String filename = "RelationInstancesOrder." + entityextractedfilename + "." + relationshiptype;
 		
 		return new File(dir, filename);
 	}
@@ -149,7 +165,7 @@ public class ProducedFileGetter
 	
 	public static File getTemporaryFile(String tempfilename)
 	{
-		File result = new File(producedfilesdirectory, "temp/" + tempfilename);
+		File result = new File(producedfilesdirectory, "temp/" + tempfilename + "." + tempfilecounter++);
 		result.getParentFile().mkdirs();
 		
 		return result;

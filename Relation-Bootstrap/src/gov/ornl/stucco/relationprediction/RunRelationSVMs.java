@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 
 
@@ -68,9 +69,15 @@ public class RunRelationSVMs
 		File libsvmjar = ProducedFileGetter.getLibSVMJarFile();
 		
 		
+		HashMap<Integer, ArrayList<InstanceID>> relationtypeToinstanceidorder = InstanceID.readRelationTypeToInstanceIDOrder(entityextractedfilename, true);
+		
+		
 		//Train a classifier for each relationship type.
 		for(int relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 		{
+			ArrayList<InstanceID> instanceidorder = relationtypeToinstanceidorder.get(relationtype);
+			
+			
 			//For testing, we will only pay attention to one relationship type, as this program is about 50 times as expensive to run for all relationship types.
 			if(testingprogram && !(relationtype == 1 || relationtype == -1))
 				continue;
@@ -97,7 +104,7 @@ public class RunRelationSVMs
 					
 					
 						//Write the training data to a temporary file.  Since testing is, by comparison, super fast, run testing too.
-						writeSVMFiles(featuremap, relationtype, testfold1, testfold2, entityextractedfilename, featuretypes, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
+						writeSVMFiles(featuremap, relationtype, instanceidorder, testfold1, testfold2, entityextractedfilename, featuretypes, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
 						
 					
 						//Our SVMs have two parameters, c and gamma.  Iterate over all combinations of them so that we can do a grid search. (Gamma is not needed for linear kernels, so we set the gammas array to have only one value in readArgs() if the kernel type chosen was Linear).
@@ -204,50 +211,87 @@ public class RunRelationSVMs
 	}
 		
 	
-	private static void writeSVMFiles(FeatureMap featuremap, int relationtype, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String featuretypes, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
+	private static void writeSVMFiles(FeatureMap featuremap, int relationtype, ArrayList<InstanceID> instanceidorder, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String featuretypes, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
 	{
-		gbt 
-		
-		File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, relationtype, true);
-	
 		try
 		{
+			String[] featuretypesarray = new String[featuretypes.length()];
+			BufferedReader[] inarray = new BufferedReader[featuretypes.length()];
+			for(int featureindex = 0; featureindex < featuretypes.length(); featureindex++)
+			{
+				String featuretype = featuretypes.charAt(featureindex) + "";
+				featuretypesarray[featureindex] = featuretype;
+				
+				File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, featuretype, relationtype, true);
+				inarray[featureindex] = new BufferedReader(new FileReader(relationinstancesfile));
+			}
+			
+			
 			boolean foundatleastonetrainingexample = false;	//We crash if there are 0 training instances, so keep track of whether we find at least one.  If we don't, we'll make an artificial one.
 			
-			BufferedReader in = new BufferedReader(new FileReader(relationinstancesfile));
 			PrintWriter trainingout =  new PrintWriter(new FileWriter(trainingfile));
 			PrintWriter trainingoutcomments = new PrintWriter(new FileWriter(trainingfilecomments));	//It is dumb that we have to save comments separately.  LibSVM documents that it is okay to include comments after a '#' in the training and test files, but it is wrong.  It fails if it finds a '#'.
 			PrintWriter testout1 = new PrintWriter(new FileWriter(testfile1));
 			PrintWriter testout1comments = new PrintWriter(new FileWriter(testfile1comments));
 			PrintWriter testout2 = new PrintWriter(new FileWriter(testfile2));
 			PrintWriter testout2comments = new PrintWriter(new FileWriter(testfile2comments));
-			String line;
-			while((line = in.readLine()) != null)
+			
+			outerloop:
+			while(true)
 			{
-				Integer whichfold = isInWhichFold(line, excludedfold1, excludedfold2);
-				String[] instanceAndcomments = line.split("#");
+				String comment = null;
+				String label = null;
+				Integer whichfold = null;
+				String featuresAndvaluesline = "";
+				
+				for(int featureindex = 0; featureindex < featuretypes.length(); featureindex++)
+				{
+					String line = inarray[featureindex].readLine();
+					if(line == null)
+						break outerloop;
+					whichfold = isInWhichFold(line, excludedfold1, excludedfold2);
+					
+					String[] instanceAndcomments = line.split("#");
+					comment = instanceAndcomments[1];
+					
+					String[] labelAndfeatures = instanceAndcomments[0].split(" ");
+					label = labelAndfeatures[0];
+					
+					String featuretype = featuretypes.charAt(featureindex) + "";
+					for(int i = 1; i < labelAndfeatures.length; i++)
+					{
+						String featurename = featuretype + ":" + labelAndfeatures[i].substring(0, labelAndfeatures[i].lastIndexOf(':'));
+						int featureid = featuremap.getIndex(featurename, featuretype);
+						String featurevalue = labelAndfeatures[i].substring(labelAndfeatures[i].lastIndexOf(':')+1);
+					
+						featuresAndvaluesline += " " + featureid + ":" + featurevalue;
+					}
+				}
+				String instanceline = label + featuresAndvaluesline;
+				
 				
 				if(whichfold == 0 || whichfold == 3)	//The instance is in neither test fold, and can therefore be used for training, or we are in the special case where we are processing all folds as training and test data.
 				{
-					if(!line.startsWith("0"))	//Use this line for training only if we can confidently heuristically classify it (and thus the line would start with "+1" or "-1").
+					if(!featuresAndvaluesline.startsWith("0"))	//Use this line for training only if we can confidently heuristically classify it (and thus the line would start with "+1" or "-1").
 					{
-						trainingout.println(instanceAndcomments[0]);
-						trainingoutcomments.println(instanceAndcomments[1]);
+						trainingout.println(instanceline);
+						trainingoutcomments.println(comment);
 						
 						foundatleastonetrainingexample = true;
 					}
 				}
 				if(whichfold == 1 || whichfold == 3)	//The instance is in test fold 1, or we are in the special case where we are processing all folds as training and test data.
 				{
-					testout1.println(instanceAndcomments[0]);
-					testout1comments.println(instanceAndcomments[1]);
+					testout1.println(instanceline);
+					testout1comments.println(comment);
 				}
 				if(whichfold == 2 || whichfold == 3)	//The instance is in test fold 2, or we are in the special case where we are processing all folds as training and test data.
 				{
-					testout2.println(instanceAndcomments[0]);
-					testout2comments.println(instanceAndcomments[1]);
+					testout2.println(instanceline);
+					testout2comments.println(comment);
 				}
 			}
+			
 			
 			//If we did not find at least one training example, just make a fake one so we do not crash.  Every test instance for this training set will fall into the one instance's class.
 			if(!foundatleastonetrainingexample)
@@ -256,7 +300,9 @@ public class RunRelationSVMs
 				trainingoutcomments.println("0 0 x 0 x");
 			}
 			
-			in.close();
+			
+			for(BufferedReader in : inarray)
+				in.close();
 			trainingout.close();
 			trainingoutcomments.close();
 			testout1.close();
@@ -270,6 +316,7 @@ public class RunRelationSVMs
 			System.exit(3);
 		}
 	}
+	
 	
 	//Returns 0 if the instance is in one of the training folds, 1 if it is in excludedfold1, or 2 if it is in excludedfold2.  Returns 3 in the special case where both excluded folds are null (the case where we want to train and test on all available instances).
 	public static int isInWhichFold(String instanceline, Integer excludedfold1, Integer excludedfold2)

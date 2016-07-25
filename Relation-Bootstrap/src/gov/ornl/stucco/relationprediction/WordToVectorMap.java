@@ -90,6 +90,33 @@ public class WordToVectorMap extends HashMap<String,double[]>
 		
 		return result;
 	}
+	//Construct a vector corresponding to this context by averaging the vectors of its words.
+	public double[] getContextVector(ArrayList<String> context)
+	{
+		double[] result = new double[vectorlength];
+		
+		int existingtokenscount = 0;	//Count the number of tokens in this context that we appear in our map.
+		for(String token : context)
+		{
+			double[] tokenvector = get(token);
+			
+			if(tokenvector != null)
+			{
+				existingtokenscount++;
+				
+				for(int i = 0; i < vectorlength; i++)
+					result[i] += tokenvector[i];
+			}
+		}
+		
+		if(existingtokenscount != 0)
+		{
+			for(int i = 0; i < vectorlength; i++)
+				result[i] /= existingtokenscount;
+		}
+		
+		return result;
+	}
 
 
 	public ArrayList<ObjectRank> findNearestWords(String testword)

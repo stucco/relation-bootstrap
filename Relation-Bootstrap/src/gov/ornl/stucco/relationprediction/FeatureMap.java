@@ -123,6 +123,8 @@ public class FeatureMap extends HashMap<String,Integer>
 
 	//This method reads all the training instance files associated with a particular entityextracted type and each feature type
 	//and maps each feature to a unique integer in a new FeatureMap.
+	//Warning: It is very important that the same training instances are written to entityextracted when the feature map
+	//is first constructed (in Run RelationSVMs
 	public static FeatureMap constructFeatureMap(String entityextractedfilename, String featuretypes, int relationtype)
 	{
 		FeatureMap featuremap = new FeatureMap();

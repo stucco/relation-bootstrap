@@ -75,13 +75,12 @@ Note that this is a very time-expensive program to run.  It may take a week to c
 <br>
 
 #### Run this program:
-
-	java gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode training
+	
+	java gov.ornl.stucco.relationprediction/FindAndOrderAllInstances preprocessedtype training
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
-	featuretypecode = Any implemented feature type code listed in FeatureMap.java.
-	
-This program takes the output of the previous two programs to write a lot of data files for relationship SVM classifiers.  preprocessedtype tells the program which output files written by the previous two programs to use.  featuretype tells the program which one type of feature to use to represent the instances.  You can see a list of available feature type codes near the top of FeatureMap.java.  If you intend to run an experiment using several feature types, you must run this program once for each of the feature types you want to use.
+
+This program takes the output of the previous two programs to write a file that lists all the instances we want to use for training, heuristically identifying them as positive or negative in the process.  The reason we want to do this is that it yields an order over all instances, and we can ensure all future programs handle instances in the same order.  This is useful because without it, we would have to hold more instances in memory in later programs that deal with multiple versions of the same files, as there could be alignment issues.
 
 
 ---
@@ -90,7 +89,21 @@ This program takes the output of the previous two programs to write a lot of dat
 
 #### Run this program:
 
-	RunRelationSVMs preprocessedtype featuretypecodes
+	java gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode training
+
+	preprocessedtype = original | entityreplaced | aliasreplaced
+	featuretypecode = Any implemented feature type code listed in FeatureMap.java.
+	
+This program takes the output of the previous three programs to write a lot of data files for relationship SVM classifiers.  preprocessedtype tells the program which output files written by the previous two programs to use.  featuretype tells the program which one type of feature to use to represent the instances.  You can see a list of available feature type codes near the top of FeatureMap.java.  If you intend to run an experiment using several feature types, you must run this program once for each of the feature types you want to use.
+
+
+---
+
+<br>
+
+#### Run this program:
+
+	java gov.ornl.stucco.relationprediction/RunRelationSVMs preprocessedtype featuretypecodes
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	featuretypecodes = a list of unseparated feature type codes from FeatureMap.java.
