@@ -106,14 +106,14 @@ public class ProducedFileGetter
 	
 	
 	//This file contains predictions made by an SVM.
-	public static File getPredictionsFile(String entityextractedfilename, int relationshiptype, boolean training)
+	public static File getPredictionsFile(String entityextractedfilename, String featuretypes, int relationshiptype, boolean training)
 	{
 		File dir = new File(producedfilesdirectory, "Testing/PredictionsFiles/");
 		if(training)
 			dir = new File(producedfilesdirectory, "Training/PredictionsFiles/");
 		dir.mkdirs();
 		
-		String filename = "Predictions." + entityextractedfilename + "." + relationshiptype;
+		String filename = "Predictions." + entityextractedfilename + "." + featuretypes + "." + relationshiptype;
 		
 		return new File(dir, filename);
 	}
@@ -194,6 +194,17 @@ public class ProducedFileGetter
 		File result = new File(datafilesdirectory, "Sources/sources.json");
 		
 		return result;
+	}
+	
+	
+	public static File getFeatureMapFile(String entityextractedfilename, String featuretypes, int relationtype)
+	{
+		File dir = new File(producedfilesdirectory, "FeatureMapFiles/");
+		dir.mkdirs();
+		
+		String filename = "FeatureMap." + entityextractedfilename + "." + featuretypes + "." + relationtype;
+		
+		return new File(dir, filename);
 	}
 	
 	

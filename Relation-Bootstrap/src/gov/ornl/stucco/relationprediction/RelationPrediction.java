@@ -23,7 +23,8 @@ public class RelationPrediction
 	RelationPrediction(String resultline)
 	{
 		String[] resultsAndcomment = resultline.split("#");
-		comment = resultsAndcomment[1];
+		if(resultsAndcomment.length == 2)
+			comment = resultsAndcomment[1];
 		
 		String[] splitresults = resultsAndcomment[0].split(" ");
 		

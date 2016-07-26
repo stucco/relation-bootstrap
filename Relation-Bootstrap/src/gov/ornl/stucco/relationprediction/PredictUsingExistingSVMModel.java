@@ -30,6 +30,7 @@ public class PredictUsingExistingSVMModel
 	}
 	
 	private static String entityextractedfilename;
+	private static String featuretypes;
 	
 	
 	public static void main(String[] args) throws IOException, InterruptedException
@@ -52,6 +53,7 @@ public class PredictUsingExistingSVMModel
 			//For testing, we will only pay attention to one relationship type, as this program is about 50 times as expensive to run for all relationship types.
 			if(testingprogram && positiverelationtype != 1)
 				continue;
+	
 			
 			int[] relationandreverse = {positiverelationtype, -positiverelationtype};
 			for(int relationtype : relationandreverse)
@@ -59,19 +61,19 @@ public class PredictUsingExistingSVMModel
 				ParametersLine bestparameters = getBestParameters(entityextractedfilename, relationtype);
 				
 				HashMap<String,String> bestparametersTovalues = bestparameters.getParametersTovalues();
-				String context = bestparametersTovalues.get("context");
+				//String context = bestparametersTovalues.get("featuretypes");
 				String kerneltype = bestparametersTovalues.get("kerneltype");
 				double c = Double.parseDouble(bestparametersTovalues.get("c"));
 				double gamma = Double.parseDouble(bestparametersTovalues.get("gamma"));
 			
-				PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, relationtype, false)));
+				PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, featuretypes, relationtype, false)));
 			
 				
-				//Write the training data to a temporary file.  Since testing is, by comparison, super fast, run testing too.
-				writeSVMFiles(relationtype, entityextractedfilename, context, testfile1, testfile1comments);
+				FeatureMap featuremap = new FeatureMap(entityextractedfilename, featuretypes, relationtype);
+				writeSVMFiles(featuremap, relationtype, entityextractedfilename, featuretypes, testfile1, testfile1comments);
 						
 					
-				File modelfile = ProducedFileGetter.getSVMModelFile(kerneltype, entityextractedfilename, context, relationtype, null, null, c, gamma);
+				File modelfile = ProducedFileGetter.getSVMModelFile(kerneltype, entityextractedfilename, featuretypes, relationtype, null, null, c, gamma);
 							
 							
 				//Apply the model to test instances
@@ -85,7 +87,7 @@ public class PredictUsingExistingSVMModel
 							
 				
 				//And print the resulting classified instances to a result file.
-				RunRelationSVMs.printResultsFile("null-" + RunRelationSVMs.getFoldSplitString(null, null) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "context=" + context, testresultsout, testfile1, testfile1comments, testpredictionsfile1);
+				RunRelationSVMs.printResultsFile("null-" + RunRelationSVMs.getFoldSplitString(null, null) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "featuretypes=" + featuretypes, testresultsout, testfile1, testfile1comments, testpredictionsfile1, true);
 					
 				
 				testresultsout.close();
@@ -109,27 +111,71 @@ public class PredictUsingExistingSVMModel
 			System.err.println("Error, invalid entityextractedfilename.  Entityextractedfilename must be original, entityreplaced, or aliasreplaced.");
 			System.exit(3);
 		}
+		
+		featuretypes = FeatureMap.getOrderedFeatureTypes(args[1]);
 	}
 	
 	
-	private static void writeSVMFiles(int relationtype, String entityextractedfilename, String contexts, File testfile1, File testfile1comments) 
+	private static void writeSVMFiles(FeatureMap featuremap, int relationtype, String entityextractedfilename, String featuretypes, File testfile1, File testfile1comments) 
 	{
-		File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, contexts, relationtype, false);
-	
 		try
 		{
-			BufferedReader in = new BufferedReader(new FileReader(relationinstancesfile));
+			String[] featuretypesarray = new String[featuretypes.length()];
+			BufferedReader[] inarray = new BufferedReader[featuretypes.length()];
+			for(int featureindex = 0; featureindex < featuretypes.length(); featureindex++)
+			{
+				String featuretype = featuretypes.charAt(featureindex) + "";
+				featuretypesarray[featureindex] = featuretype;
+				
+				File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile(entityextractedfilename, featuretype, relationtype, false);
+				inarray[featureindex] = new BufferedReader(new FileReader(relationinstancesfile));
+			}
+			
 			PrintWriter testout1 = new PrintWriter(new FileWriter(testfile1));
 			PrintWriter testout1comments = new PrintWriter(new FileWriter(testfile1comments));
-			String line;
-			while((line = in.readLine()) != null)
+			
+			outerloop:
+			while(true)
 			{
-				String[] instanceAndcomments = line.split("#");
+				String comment = null;
+				String label = null;
+				String featuresAndvaluesline = "";
 				
-				testout1.println(instanceAndcomments[0]);
-				testout1comments.println(instanceAndcomments[1]);
+				for(int featureindex = 0; featureindex < featuretypes.length(); featureindex++)
+				{
+					String line = inarray[featureindex].readLine();
+					if(line == null)
+						break outerloop;
+					
+					//String[] instanceAndcomments = line.split("#");
+					String instance = line.substring(0, line.indexOf('#'));
+					comment = line.substring(line.indexOf('#')+1);
+					
+					//comment = instanceAndcomments[1];
+					
+					//String[] labelAndfeatures = instanceAndcomments[0].split(" ");
+					String[] labelAndfeatures = instance.split(" ");
+					label = labelAndfeatures[0];
+					
+					String featuretype = featuretypes.charAt(featureindex) + "";
+					for(int i = 1; i < labelAndfeatures.length; i++)
+					{
+						String featurename = featuretype + ":" + labelAndfeatures[i].substring(0, labelAndfeatures[i].lastIndexOf(':'));
+						int featureid = featuremap.getIndex(featurename, featuretype);
+						String featurevalue = labelAndfeatures[i].substring(labelAndfeatures[i].lastIndexOf(':')+1);
+					
+						featuresAndvaluesline += " " + featureid + ":" + featurevalue;
+					}
+				}
+				String instanceline = label + featuresAndvaluesline;
+				
+		
+				testout1.println(instanceline);
+				testout1comments.println(comment);
 			}
-			in.close();
+			
+			for(BufferedReader in : inarray)
+				in.close();
 			testout1.close();
 			testout1comments.close();
 		}catch(IOException e)

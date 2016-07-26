@@ -84,7 +84,7 @@ public class RunRelationSVMs
 			
 				FeatureMap featuremap = FeatureMap.constructFeatureMap(entityextractedfilename, featuretypes, relationtype);
 			
-				PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, relationtype, true)));
+				PrintWriter testresultsout = new PrintWriter(new FileWriter(ProducedFileGetter.getPredictionsFile(entityextractedfilename, featuretypes, relationtype, true)));
 			
 				//In order to do cross-validation, we need to set aside two folds for tuning parameters and testing.  So testfold1 and testfold2 will be those folds.  All the other folds can be used for training.
 				for(int t1index = 0; t1index < folds.length; t1index++)
@@ -143,7 +143,7 @@ public class RunRelationSVMs
 									t1process.waitFor();
 							
 									//And print the resulting classified instances to a result file.
-									printResultsFile(testfold1 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "featuretypes=" + featuretypes, testresultsout, testfile1, testfile1comments, testpredictionsfile1);
+									printResultsFile(testfold1 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "featuretypes=" + featuretypes, testresultsout, testfile1, testfile1comments, testpredictionsfile1, false);
 							
 							
 									//Recall that we left two folds out of the training set.  If those two folds are not the same, also apply the model to and print the results from the other fold.
@@ -156,7 +156,7 @@ public class RunRelationSVMs
 											System.out.println(line);
 										t2process.waitFor();
 								
-										printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "featuretypes=" + featuretypes, testresultsout, testfile2, testfile2comments, testpredictionsfile2);
+										printResultsFile(testfold2 + "-" + getFoldSplitString(testfold1, testfold2) + " " + "kerneltype=" + kerneltype + " " + "c=" + c + " " + "gamma=" + gamma + " " + "featuretypes=" + featuretypes, testresultsout, testfile2, testfile2comments, testpredictionsfile2, false);
 									}
 							
 									//We only care about the predictions in most cases.  We need to save the model only when we are training on the entire dataset because that model may be used to make real predictions for stucco.
@@ -168,6 +168,8 @@ public class RunRelationSVMs
 					}
 				}
 				testresultsout.close();
+				
+			featuremap.writeAsFile(entityextractedfilename, featuretypes, relationtype);
 		}
 		
 		
@@ -356,7 +358,7 @@ public class RunRelationSVMs
 	
 	
 	//We used the SVM to classify test instances in the main method, but we have not stored the resulting predictions in a useful way yet.  So do that.
-	public static void printResultsFile(String firstline, PrintWriter resultsout, File testdatafile, File testcommentsfile, File testpredictionsfile) throws IOException
+	public static void printResultsFile(String firstline, PrintWriter resultsout, File testdatafile, File testcommentsfile, File testpredictionsfile, boolean printcomments) throws IOException
 	{
 		//Since we are writing all results for one relationship type to the same file, we need some way to distinguish what parameters are used to generate a particular result shown in the results file.  This first line tells what parameters were used to generate all instances that follow it.
 		resultsout.println(firstline);
@@ -377,8 +379,11 @@ public class RunRelationSVMs
 			
 			long predictedlabel = Math.round(Double.parseDouble(predictionline));
 
-			resultsout.println(truelabel + "/" + predictedlabel + " #" + commentline);
-			
+			if(printcomments)
+				resultsout.println(truelabel + "/" + predictedlabel + " #" + commentline);
+			else
+				resultsout.println(truelabel + "/" + predictedlabel);
+				
 			dataline = testdatain.readLine();
 			predictionline = testpredictionsin.readLine();
 			commentline = testcommentsin.readLine();

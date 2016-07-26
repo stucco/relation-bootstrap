@@ -1,6 +1,9 @@
 package gov.ornl.stucco.relationprediction;
 
 import java.util.*;
+
+import edu.stanford.nlp.io.EncodingPrintWriter.out;
+
 import java.io.*;
 
 public class FeatureMap extends HashMap<String,Integer>
@@ -27,34 +30,42 @@ public class FeatureMap extends HashMap<String,Integer>
 		index2type = new HashMap<Integer,String>();
 	}
 	
-	/*
-	FeatureMap(File featuremapfile) throws IOException
+	FeatureMap(String entityextractedfilename, String featuretypes, int relationtype)
 	{
-		index2feature = new HashMap<Integer,String>();
-		index2type = new HashMap<Integer,String>();
-		
-		BufferedReader in = new BufferedReader(new FileReader(featuremapfile));
-		String line;
-		while((line = in.readLine()) != null)
+		try
 		{
-			String[] typecolonnameandindex = line.split("	");
-			String typecolonname = typecolonnameandindex[0];
+			File featuremapfile = ProducedFileGetter.getFeatureMapFile(entityextractedfilename, featuretypes, relationtype);
+		
+			index2feature = new HashMap<Integer,String>();
+			index2type = new HashMap<Integer,String>();
+		
+			BufferedReader in = new BufferedReader(new FileReader(featuremapfile));
+			String line;
+			while((line = in.readLine()) != null)
+			{
+				String[] indexAndtypecolonname = line.split("\t");
+				String typecolonname = indexAndtypecolonname[1];
 			
-			int index = Integer.parseInt(typecolonnameandindex[1]);
-			String beforecolon = typecolonname.substring(0, typecolonname.indexOf(':'));
-			String type;
-			if(beforecolon.contains("."))
-				type = beforecolon.substring(0, beforecolon.indexOf('.'));
-			else
-				type = beforecolon;
-			String name = typecolonname;
+				int index = Integer.parseInt(indexAndtypecolonname[0]);
+				String type = typecolonname.substring(0, typecolonname.indexOf(':'));
+				//String type;
+				//if(beforecolon.contains("."))
+				//	type = beforecolon.substring(0, beforecolon.indexOf('.'));
+				//else
+				//	type = beforecolon;
+				String name = typecolonname;
 			
-			index2feature.put(index, name);
-			index2type.put(index, type);
+				index2feature.put(index, name);
+				index2type.put(index, type);
+			}
+			in.close();
+		}catch(IOException e)
+		{
+			System.out.println(e);
+			e.printStackTrace();
+			System.exit(3);
 		}
-		in.close();
 	}
-	*/
 	
 	public int getIndex(String featurename, String featuretype)
 	{
@@ -169,4 +180,24 @@ public class FeatureMap extends HashMap<String,Integer>
 		return featuremap;
 	}
 
+	
+	public void writeAsFile(String entityextractedfilename, String featuretypes, int relationtype)
+	{
+		try
+		{
+			File f = ProducedFileGetter.getFeatureMapFile(entityextractedfilename, featuretypes, relationtype);
+			PrintWriter out = new PrintWriter(new FileWriter(f));
+		
+			ArrayList<Integer> allfeatureids = new ArrayList<Integer>(values());
+			Collections.sort(allfeatureids);
+			for(Integer featureid : allfeatureids)
+				out.println(featureid + "\t" + index2feature.get(featureid));
+			out.close();
+		}catch(IOException e)
+		{
+			System.out.println(e);
+			e.printStackTrace();
+			System.exit(3);
+		}
+	}
 }

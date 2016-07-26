@@ -37,6 +37,7 @@ public class CalculateResults
 	//private static boolean training = false;
 	
 	private static String entityextractedfilename;
+	private static String featuretypes;
 	
 	
 	
@@ -46,12 +47,14 @@ public class CalculateResults
 		readArgs(args);
 
 		for(int relationshiptype : relationshiptypes)
-			printResults(relationshiptype);
+			printResults(entityextractedfilename, featuretypes, relationshiptype);
 	}
 	
 	private static void readArgs(String[] args)
 	{
 		entityextractedfilename = args[0];
+
+		featuretypes = FeatureMap.getOrderedFeatureTypes(args[1]);
 		
 		//for(int i = 1; i < args.length; i++)
 		//{
@@ -61,8 +64,7 @@ public class CalculateResults
 	}
 	
 	
-	
-	private static void printResults(int relationshiptype)
+	private static void printResults(String entityextractedfilename, String featuretypes, int relationshiptype)
 	{
 		ArrayList<RelationPrediction> testpredictions = new ArrayList<RelationPrediction>();
 		
@@ -77,9 +79,9 @@ public class CalculateResults
 			if(testfold != null)
 			{
 				//Read the predictions for when the entities come in the normal order.
-				ParametersLine normalbestparameters = findBestParameters(commandlineargumentconstraints, relationshiptype, testfold);
+				ParametersLine normalbestparameters = findBestParameters(commandlineargumentconstraints, entityextractedfilename, featuretypes, relationshiptype, testfold);
 				normalbestparameterslist.add(normalbestparameters);
-				ArrayList<RelationPrediction> normalpredictionstoadd = readPredictions(normalbestparameters, testfold, relationshiptype, true, false);
+				ArrayList<RelationPrediction> normalpredictionstoadd = readPredictions(normalbestparameters, entityextractedfilename, featuretypes, testfold, relationshiptype, true, false);
 				testpredictions.addAll(normalpredictionstoadd);
 				{
 					double[] fpr = getFPRForTestInstances(normalpredictionstoadd);
@@ -90,9 +92,9 @@ public class CalculateResults
 				
 				
 				//Add the predictions for when the entities come in the reverse order.
-				ParametersLine reversebestparameters = findBestParameters(commandlineargumentconstraints, GenericCyberEntityTextRelationship.getReverseRelationshipType(relationshiptype), testfold);
+				ParametersLine reversebestparameters = findBestParameters(commandlineargumentconstraints, entityextractedfilename, featuretypes, GenericCyberEntityTextRelationship.getReverseRelationshipType(relationshiptype), testfold);
 				reversebestparameterslist.add(reversebestparameters);
-				ArrayList<RelationPrediction> reversepredictionstoadd = readPredictions(reversebestparameters, testfold, relationshiptype, true, false);
+				ArrayList<RelationPrediction> reversepredictionstoadd = readPredictions(reversebestparameters, entityextractedfilename, featuretypes, testfold, relationshiptype, true, false);
 				testpredictions.addAll(reversepredictionstoadd);
 				testpredictions.addAll(normalpredictionstoadd);
 				{
@@ -153,16 +155,16 @@ public class CalculateResults
 		}
 	}
 
-	private static ParametersLine findBestParameters(ParametersLine cmdlineargconstraints, int relationshiptype, Integer testfold)
+	private static ParametersLine findBestParameters(ParametersLine cmdlineargconstraints, String entityextractedfilename, String featuretypes, int relationshiptype, Integer testfold)
 	{
-		ArrayList<ParametersLine> allparameters = getAllParameters(cmdlineargconstraints, relationshiptype);
+		ArrayList<ParametersLine> allparameters = getAllParameters(cmdlineargconstraints, entityextractedfilename, featuretypes, relationshiptype);
 
 		double bestfscore = Double.NEGATIVE_INFINITY;
 		ParametersLine bestfscoreparams = null;
 		
 		for(ParametersLine currentparameters : allparameters)
 		{
-			ArrayList<RelationPrediction> developmentpredictions = readPredictions(currentparameters, testfold, relationshiptype, true, true);
+			ArrayList<RelationPrediction> developmentpredictions = readPredictions(currentparameters, entityextractedfilename, featuretypes, testfold, relationshiptype, true, true);
 		
 			double TPs = 0.;
 			double FPs = 0.;
@@ -191,13 +193,13 @@ public class CalculateResults
 		return bestfscoreparams;
 	}
 	
-	private static ArrayList<ParametersLine> getAllParameters(ParametersLine cmdlineargconstraints, int relationshiptype)
+	private static ArrayList<ParametersLine> getAllParameters(ParametersLine cmdlineargconstraints, String entityextractedfilename, String featuretypes, int relationshiptype)
 	{
 		ArrayList<ParametersLine> allparameters = new ArrayList<ParametersLine>();
 		
 		try
 		{
-				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, relationshiptype, true);
+				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, featuretypes, relationshiptype, true);
 				
 				BufferedReader in = new BufferedReader(new FileReader(resultsfile));
 				String line;
@@ -232,13 +234,13 @@ public class CalculateResults
 	}
 
 	//development should be sent true if we want development predictions, and false if we want test predictions.
-	private static ArrayList<RelationPrediction> readPredictions(ParametersLine currentparameters, Integer testfold, int relationshiptype, boolean training, boolean development)
+	private static ArrayList<RelationPrediction> readPredictions(ParametersLine currentparameters, String entityextractedfilename, String featuretypes, Integer testfold, int relationshiptype, boolean training, boolean development)
 	{
 		ArrayList<RelationPrediction> results = new ArrayList<RelationPrediction>();
 		
 		try
 		{
-				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, relationshiptype, training);
+				File resultsfile = ProducedFileGetter.getPredictionsFile(entityextractedfilename, featuretypes, relationshiptype, training);
 				
 				boolean developmentstate = false;
 				boolean teststate = false;

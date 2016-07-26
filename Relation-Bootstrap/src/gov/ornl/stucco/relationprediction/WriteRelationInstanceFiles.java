@@ -217,7 +217,7 @@ public class WriteRelationInstanceFiles
 									unlemmatizedtokens += " " + unlemmatizedword;
 							}
 							
-							instanceline += " # " + instanceid + " " + firsttokensentencenum + " " + firsttokenunlemmatizedsentence[replacedfirsttokenindex] + " " + firstsentence[replacedfirsttokenindex] + " " + secondtokensentencenum + " " + secondtokenunlemmatizedsentence[replacedsecondtokenindex] + " " + secondsentence[replacedsecondtokenindex] + " " + unlemmatizedtokens.trim();
+							instanceline += " # " + instanceid + " " + firsttokenunlemmatizedsentence[replacedfirsttokenindex] + " " + firstsentence[replacedfirsttokenindex] + " " + secondtokenunlemmatizedsentence[replacedsecondtokenindex] + " " + secondsentence[replacedsecondtokenindex] + " " + unlemmatizedtokens.trim();
 						}
 				
 						//And finally, print it to the appropriate file using the PrintWriter we 
