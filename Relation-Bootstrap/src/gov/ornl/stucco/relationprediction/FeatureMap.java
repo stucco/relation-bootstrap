@@ -12,6 +12,10 @@ public class FeatureMap extends HashMap<String,Integer>
 	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity.	
 	public static final String WORDEMBEDDINGBETWEENCONTEXT = "b";	//Context between entities.
 	public static final String WORDEMBEDDINGAFTERCONTEXT = "c";	//Context after second entity.
+	public static final String SYNTACTICPARSETREEPATH = "d";	//String of syntactic parse tree node labels between entities.
+	
+	
+	public static final String ALWAYSPREDICTPOSITIVECODE = "z";	//Warning.  This is not a code that ever gets used in a command line arguments.  It is merely used internally to determine which file to write positive prediction results to.
 	
 	
 	

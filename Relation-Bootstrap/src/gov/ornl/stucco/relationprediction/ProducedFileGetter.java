@@ -119,12 +119,12 @@ public class ProducedFileGetter
 	}
 
 	
-	public static File getResultsFile(String entityextractedfilename, int relationshiptype)
+	public static File getResultsFile(String entityextractedfilename, String featuretypes, int relationshiptype)
 	{
-		File dir = new File(producedfilesdirectory, "ExperimentalResultsFiles/");
+		File dir = new File(producedfilesdirectory, "Training/ExperimentalResultsFiles/");
 		dir.mkdirs();
 		
-		String filename = "Results." + entityextractedfilename + "." + relationshiptype;
+		String filename = "Results." + entityextractedfilename + "." + featuretypes + "." + relationshiptype;
 		
 		return new File(dir, filename);
 	}

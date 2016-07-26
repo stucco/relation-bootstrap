@@ -58,7 +58,7 @@ public class PredictUsingExistingSVMModel
 			int[] relationandreverse = {positiverelationtype, -positiverelationtype};
 			for(int relationtype : relationandreverse)
 			{
-				ParametersLine bestparameters = getBestParameters(entityextractedfilename, relationtype);
+				ParametersLine bestparameters = getBestParameters(entityextractedfilename, featuretypes, relationtype);
 				
 				HashMap<String,String> bestparametersTovalues = bestparameters.getParametersTovalues();
 				//String context = bestparametersTovalues.get("featuretypes");
@@ -187,19 +187,22 @@ public class PredictUsingExistingSVMModel
 	}
 	
 	
-	public static ParametersLine getBestParameters(String entityextractedfilename, int relationshiptype)
+	public static ParametersLine getBestParameters(String entityextractedfilename, String featuretypes, int relationshiptype)
 	{
 		ParametersLine result = null;
 		
 		try
 		{
-			File f = ProducedFileGetter.getResultsFile(entityextractedfilename, Math.abs(relationshiptype));
+			File f = ProducedFileGetter.getResultsFile(entityextractedfilename, featuretypes, Math.abs(relationshiptype));
 			BufferedReader in = new BufferedReader(new FileReader(f));
-			String line = in.readLine();
+			String lastline = in.readLine();
+			String line;
+			while((line = in.readLine()) != null)
+				lastline = line;
 			in.close();
 			
 			//relationshiptype + "\t" + formatter.format(fscore) + "\t" + formatter.format(precision) + "\t" + formatter.format(recall) + "\t" + bestnormalparametersline + "\t" + bestreverseparametersline;
-			String[] splitline = line.split("\t");
+			String[] splitline = lastline.split("\t");
 			String normalparametersstring = splitline[splitline.length-2];
 			String reverseparametersstring = splitline[splitline.length-1];
 			

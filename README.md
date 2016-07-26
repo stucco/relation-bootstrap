@@ -89,7 +89,7 @@ This program takes the output of the previous two programs to write a file that 
 
 #### Run this program:
 
-	java gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode training
+	java  -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar:./dependency/*" gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode training
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	featuretypecode = Any implemented feature type code listed in FeatureMap.java.
@@ -173,7 +173,7 @@ This program takes the output of the previous two programs to write a file that 
 
 #### Run this program:
 
-	java gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode
+	java  -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar:./dependency/*" gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	featuretypecode = Any implemented feature type code listed in FeatureMap.java.
@@ -195,7 +195,7 @@ This program takes the output of the previous programs to write a lot of data fi
 This program takes the instance data written by the previous program and applies an SVM model to it that was written during training.  It chooses which parameters to use based on the output of CalculateResults, which gets run during the training phase.  This program will not run properly unless WriteRelationInstanceFiles has been run using the same preprocessedtype parameter.  And of course CalculateResults needs to be run with the same preprocessedtype parameter during training as well.
  
 
-The resulting predictions can be found in ...relation-bootstrap/ProducedFiles/Testing/PredictionsFiles.  Each line of predictions is of the form:
+The resulting predictions can be found in ...relation-bootstrap/ProducedFiles/Testing/PredictionsFiles.  This file can be gotten programatically via the method gov.ornl.stucco.relationprediction/ProducedFileGetter.getPredictionsFile.  Each line of predictions is of the form:
 
 	HeuristicLabel/Predictedlabel # InstanceID OriginalEntity1Text ModifiedEntity1Text OriginalEntity2Text ModifiedEntity2Text SourceText
 
@@ -216,6 +216,7 @@ OriginalEntity2Text and ModifiedEntity2Text are exactly the same as OriginalEnti
 Finally, SourceText is the original text from which the relationship candidate was extracted, buth with its entities replaced with their OriginalEntityText versions.
 
 
+Add "allpositive" (without quotes) to the list of command line parameters if you instead want to look at baseline results wherein the positive class is predicted for every instance.  
 
 
 

@@ -19,7 +19,10 @@ public class CalculateResults
 	
 	
 	private static NumberFormat formatter = new DecimalFormat(".000");
-	private static boolean printperfoldresults = false;
+	private static boolean printperfoldresults = true;
+	
+	
+	private static boolean predictallpositive = false;
 	
 
 	private static HashSet<Integer> relationshiptypes = GenericCyberEntityTextRelationship.allpositiverelationshiptypesset;
@@ -56,11 +59,11 @@ public class CalculateResults
 
 		featuretypes = FeatureMap.getOrderedFeatureTypes(args[1]);
 		
-		//for(int i = 1; i < args.length; i++)
-		//{
-		//	if("training".equals(args[i]))
-		//		training = true;
-		//}
+		for(int i = 2; i < args.length; i++)
+		{
+			if("allpositive".equals(args[i]))
+				predictallpositive = true;
+		}
 	}
 	
 	
@@ -73,78 +76,87 @@ public class CalculateResults
 		ArrayList<ObjectRank> normalbestparameterslistranked = new ArrayList<ObjectRank>();
 		ArrayList<ObjectRank> reversebestparameterslistranked = new ArrayList<ObjectRank>();
 		
-		//Collect all test set instances and do a bunch of bookkeeping along the way.  Simultaneously select the best set of parameters for predicting them via cross validation on the trainings set.
-		for(Integer testfold : RunRelationSVMs.folds)
-		{
-			if(testfold != null)
-			{
-				//Read the predictions for when the entities come in the normal order.
-				ParametersLine normalbestparameters = findBestParameters(commandlineargumentconstraints, entityextractedfilename, featuretypes, relationshiptype, testfold);
-				normalbestparameterslist.add(normalbestparameters);
-				ArrayList<RelationPrediction> normalpredictionstoadd = readPredictions(normalbestparameters, entityextractedfilename, featuretypes, testfold, relationshiptype, true, false);
-				testpredictions.addAll(normalpredictionstoadd);
-				{
-					double[] fpr = getFPRForTestInstances(normalpredictionstoadd);
-					double fscore = fpr[0];
-					
-					normalbestparameterslistranked.add(new ObjectRank(normalbestparameters, fscore));
-				}
-				
-				
-				//Add the predictions for when the entities come in the reverse order.
-				ParametersLine reversebestparameters = findBestParameters(commandlineargumentconstraints, entityextractedfilename, featuretypes, GenericCyberEntityTextRelationship.getReverseRelationshipType(relationshiptype), testfold);
-				reversebestparameterslist.add(reversebestparameters);
-				ArrayList<RelationPrediction> reversepredictionstoadd = readPredictions(reversebestparameters, entityextractedfilename, featuretypes, testfold, relationshiptype, true, false);
-				testpredictions.addAll(reversepredictionstoadd);
-				testpredictions.addAll(normalpredictionstoadd);
-				{
-					double[] fpr = getFPRForTestInstances(reversepredictionstoadd);
-					double fscore = fpr[0];
-					
-					reversebestparameterslistranked.add(new ObjectRank(reversebestparameters, fscore));
-				}
-				
-				
-				//If we want to print results for each fold, do it.
-				if(printperfoldresults)
-				{
-					ArrayList<RelationPrediction> onefoldresults = new ArrayList<RelationPrediction>(normalpredictionstoadd);
-					onefoldresults.addAll(reversepredictionstoadd);
-					
-					double[] fpr = getFPRForTestInstances(onefoldresults);
-					double fscore = fpr[0];
-					double precision = fpr[1];
-					double recall = fpr[2];
-					
-					System.out.println(relationshiptype + "\t" + formatter.format(fscore) + "\t" + formatter.format(precision) + "\t" + formatter.format(recall) + "\t" + normalbestparameters+ "\t" + reversebestparameters);
-				}
-			}
-		}
-		
-		
-		//Calculate the results for the entire test set.
-		double[] fpr = getFPRForTestInstances(testpredictions);
-		double fscore = fpr[0];
-		double precision = fpr[1];
-		double recall = fpr[2];
-		
-		
-		//Choose the set of parameters that got the highest f-score.
-		Collections.sort(normalbestparameterslistranked);
-		ParametersLine bestnormalparametersline = (ParametersLine)normalbestparameterslistranked.get(normalbestparameterslistranked.size()-1).obj;
-		Collections.sort(reversebestparameterslistranked);
-		ParametersLine bestreverseparametersline = (ParametersLine)reversebestparameterslistranked.get(reversebestparameterslistranked.size()-1).obj;
-		
-		
-		String outputline = relationshiptype + "\t" + formatter.format(fscore) + "\t" + formatter.format(precision) + "\t" + formatter.format(recall) + "\t" + bestnormalparametersline + "\t" + bestreverseparametersline;
-		System.out.println(outputline);
-	
-	
-		//Also print it to a file because we'll want to retrieve the best parameters for making predictions on unknown relationships.
 		try
 		{
-			File resultsfile = ProducedFileGetter.getResultsFile(entityextractedfilename, relationshiptype);
+			File resultsfile = ProducedFileGetter.getResultsFile(entityextractedfilename, featuretypes, relationshiptype);
+			if(predictallpositive)
+				resultsfile = ProducedFileGetter.getResultsFile(entityextractedfilename, FeatureMap.ALWAYSPREDICTPOSITIVECODE, relationshiptype);
 			PrintWriter out = new PrintWriter(new FileWriter(resultsfile));
+		
+			//Collect all test set instances and do a bunch of bookkeeping along the way.  Simultaneously select the best set of parameters for predicting them via cross validation on the trainings set.
+			for(Integer testfold : RunRelationSVMs.folds)
+			{
+				if(testfold != null)
+				{
+					//Read the predictions for when the entities come in the normal order.
+					ParametersLine normalbestparameters = findBestParameters(commandlineargumentconstraints, entityextractedfilename, featuretypes, relationshiptype, testfold);
+					normalbestparameterslist.add(normalbestparameters);
+					ArrayList<RelationPrediction> normalpredictionstoadd = readPredictions(normalbestparameters, entityextractedfilename, featuretypes, testfold, relationshiptype, true, false);
+					testpredictions.addAll(normalpredictionstoadd);
+					{
+						double[] fpr = getFPRForTestInstances(normalpredictionstoadd);
+						double fscore = fpr[0];
+					
+						normalbestparameterslistranked.add(new ObjectRank(normalbestparameters, fscore));
+					}
+				
+					
+					//Add the predictions for when the entities come in the reverse order.
+					ParametersLine reversebestparameters = findBestParameters(commandlineargumentconstraints, entityextractedfilename, featuretypes, GenericCyberEntityTextRelationship.getReverseRelationshipType(relationshiptype), testfold);
+					reversebestparameterslist.add(reversebestparameters);
+					ArrayList<RelationPrediction> reversepredictionstoadd = readPredictions(reversebestparameters, entityextractedfilename, featuretypes, testfold, relationshiptype, true, false);
+					testpredictions.addAll(reversepredictionstoadd);
+					testpredictions.addAll(normalpredictionstoadd);
+					{
+						double[] fpr = getFPRForTestInstances(reversepredictionstoadd);
+						double fscore = fpr[0];
+					
+						reversebestparameterslistranked.add(new ObjectRank(reversebestparameters, fscore));
+					}
+				
+				
+					//If we want to print results for each fold, do it.
+					if(printperfoldresults)
+					{
+						ArrayList<RelationPrediction> onefoldresults = new ArrayList<RelationPrediction>(normalpredictionstoadd);
+						onefoldresults.addAll(reversepredictionstoadd);
+					
+						double[] fpr = getFPRForTestInstances(onefoldresults);
+						if(predictallpositive)
+							fpr = getFPRForPredictAllPositive(onefoldresults);
+						double fscore = fpr[0];
+						double precision = fpr[1];
+						double recall = fpr[2];
+					
+						String onefoldresultline = relationshiptype + "\t" + formatter.format(fscore) + "\t" + formatter.format(precision) + "\t" + formatter.format(recall) + "\t" + normalbestparameters+ "\t" + reversebestparameters;
+						System.out.println(onefoldresultline);
+						out.println(onefoldresultline);
+					}
+				}
+			}
+		
+		
+			//Calculate the results for the entire test set.
+			double[] fpr = getFPRForTestInstances(testpredictions);
+			if(predictallpositive)
+				fpr = getFPRForPredictAllPositive(testpredictions);
+			double fscore = fpr[0];
+			double precision = fpr[1];
+			double recall = fpr[2];
+		
+		
+			//Choose the set of parameters that got the highest f-score.
+			Collections.sort(normalbestparameterslistranked);
+			ParametersLine bestnormalparametersline = (ParametersLine)normalbestparameterslistranked.get(normalbestparameterslistranked.size()-1).obj;
+			Collections.sort(reversebestparameterslistranked);
+			ParametersLine bestreverseparametersline = (ParametersLine)reversebestparameterslistranked.get(reversebestparameterslistranked.size()-1).obj;
+		
+		
+			String outputline = relationshiptype + "\t" + formatter.format(fscore) + "\t" + formatter.format(precision) + "\t" + formatter.format(recall) + "\t" + bestnormalparametersline + "\t" + bestreverseparametersline;
+			System.out.println(outputline);
+	
+	
+			//Also print it to a file because we'll want to retrieve the best parameters for making predictions on unknown relationships.
 			out.println(outputline);
 			out.close();
 		}catch(IOException e)
@@ -346,5 +358,39 @@ public class CalculateResults
 		return result;
 	}
 	
+	public static double[] getFPRForPredictAllPositive(ArrayList<RelationPrediction> predictions)
+	{
+		double TPs = 0.;
+		double FPs = 0.;
+		double FNs = 0.;
+		double TNs = 0.;
+		for(int i = 0; i < predictions.size(); i++)
+		{
+			RelationPrediction instance = predictions.get(i);
+			int tpfptnfncode = instance.getTPorFPorTNorFN();
+			if(tpfptnfncode == RelationPrediction.TPindex)
+				TPs++;
+			else if(tpfptnfncode == RelationPrediction.FPindex)
+				FPs++;
+			else if(tpfptnfncode == RelationPrediction.FNindex)
+				FNs++;
+			else if(tpfptnfncode == RelationPrediction.TNindex)
+				TNs++;
+		}
+		
+		
+		double allpositiveTPs = TPs + FNs;
+		double allpositiveFPs = FPs + TNs;
+		double allpositiveFNs = 0.;
+
+		
+		double fscore = getFscore(allpositiveTPs, allpositiveFPs, allpositiveFNs);
+		double precision = getPrecision(allpositiveTPs, allpositiveFPs);
+		double recall = getRecall(allpositiveTPs, allpositiveFNs);
+		
+		
+		double[] result = {fscore, precision, recall};
+		return result;
+	}
 
 }

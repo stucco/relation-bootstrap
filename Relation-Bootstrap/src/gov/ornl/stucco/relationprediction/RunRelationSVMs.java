@@ -34,8 +34,8 @@ public class RunRelationSVMs
 	private static boolean alwaysretrain = true;
 	
 	
-	private static double[] cs = { 100., 1000., 10000., 100000};
-	private static double[] gammas = { .001, .01, .1, 1., 10.};
+	private static double[] cs = {.01, .1, 1., 10.};
+	private static double[] gammas = { .0001, .001, .01, .1, 1.};
 	private static String[] kerneltypes = {"Linear", "RBF"};
 	
 	

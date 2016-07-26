@@ -157,7 +157,7 @@ public class FindAndOrderAllInstances
 											if(isknownrelationship == null)
 												label = "0";
 											else if(isknownrelationship)
-												label = "+1";
+												label = "1";
 											else
 												label = "-1";
 											

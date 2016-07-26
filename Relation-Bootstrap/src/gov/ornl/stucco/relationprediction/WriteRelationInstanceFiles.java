@@ -18,10 +18,22 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.trees.Tree;
+import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
+import edu.stanford.nlp.util.CoreMap;
+import gov.ornl.stucco.entity.EntityLabeler;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 
 public class WriteRelationInstanceFiles
@@ -41,14 +53,14 @@ public class WriteRelationInstanceFiles
 		readArgs(args);
 		
 		//It is kind of dumb to initialize all the printwriters at once right here, but it made sense in an old version of this program.
-		HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter = initializePrintWriters(featuretype);
+		HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTofeaturetypeToprintwriter = initializePrintWriters(featuretype);
 		
 		HashMap<Integer, ArrayList<InstanceID>> relationtypeToinstanceidorder = InstanceID.readRelationTypeToInstanceIDOrder(entityextractedfilename, training);
 		
-		buildAndWriteTrainingInstances(featuretype, relationtypeTocontextToprintwriter, relationtypeToinstanceidorder);
+		buildAndWriteTrainingInstances(featuretype, relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
 		
 		//Close the file streams.
-		for(HashMap<String,PrintWriter> contextToprintwriter : relationtypeTocontextToprintwriter.values())
+		for(HashMap<String,PrintWriter> contextToprintwriter : relationtypeTofeaturetypeToprintwriter.values())
 			for(PrintWriter pw : contextToprintwriter.values())
 				pw.close();
 	}
@@ -106,14 +118,16 @@ public class WriteRelationInstanceFiles
 
 	
 	//Direct the flow to the method for writing the appropriate feature type.
-	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
+	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTofeaturetypeToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
 	{
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
-			writeContextFile(featuretype, relationtypeTocontextToprintwriter, relationtypeToinstanceidorder);
+			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
-			writeContextFile(featuretype, relationtypeTocontextToprintwriter, relationtypeToinstanceidorder);
+			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
-			writeContextFile(featuretype, relationtypeTocontextToprintwriter, relationtypeToinstanceidorder);
+			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
+		if(featuretype.equals(FeatureMap.SYNTACTICPARSETREEPATH))
+			writeSyntacticParseTreePathFile(relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
 	}
 	
 	private static void writeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
@@ -206,7 +220,7 @@ public class WriteRelationInstanceFiles
 						//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
 						//add the entity names to the end of the line.
 						if(training)
-						instanceline += " # " + instanceid;
+							instanceline += " # " + instanceid;
 						else
 						{
 							String unlemmatizedtokens = "";
@@ -319,5 +333,148 @@ public class WriteRelationInstanceFiles
  		return resultlines;
  	}
 	
+ 	
+ 	public static void writeSyntacticParseTreePathFile(HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
+ 	{	 
+ 		String currentfilename = null;
+ 		List<CoreMap> sentences = null;
+ 		
+		for(Integer relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
+		{
+			PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(FeatureMap.SYNTACTICPARSETREEPATH);
+			
+			ArrayList<InstanceID> instanceidorder = new ArrayList<InstanceID>(relationtypeToinstanceidorder.get(relationtype));
+			while(instanceidorder.size() > 0)
+			{
+				InstanceID instanceid = instanceidorder.remove(0);
+					
+				String desiredfilename = instanceid.getFileName();
+				if(!desiredfilename.equals(currentfilename))
+				{
+					File f = new File(ProducedFileGetter.getEntityExtractedSerializedDirectory(training), desiredfilename);
+					Annotation deserDoc = EntityLabeler.deserializeAnnotatedDoc(f.getAbsolutePath());
+					sentences = deserDoc.get(SentencesAnnotation.class);
+					currentfilename = desiredfilename;
+				}
+					
+				String parsetreepath = getParseTreePath(instanceid, sentences);
+					
+				out.println(instanceid.getHeuristicLabel() + " " + parsetreepath + ":1" + " # " + instanceid);
+			}
+				
+			out.close();
+		}
+ 	}	
+ 	
+ 	private static String getParseTreePath(InstanceID instanceid, List<CoreMap> sentences)
+ 	{
+ 		int firstsentencenum = instanceid.getFirstTokenSentenceNum();
+		CoreMap sent1 = sentences.get(firstsentencenum);
+		//ArrayList<Tree> pathtoroot1 = getPathToRoot(sent1, instanceid.getFirstTokenEndIndex()-1);
+
+		int secondsentencenum = instanceid.getSecondTokenSentenceNum();
+		CoreMap sent2 = sentences.get(secondsentencenum);
+		//ArrayList<Tree> pathtoroot2 = getPathToRoot(sent2, instanceid.getSecondTokenEndIndex()-1);
+		
+		
+		String result = "";
+		if(sent1 == sent2)
+		{
+			Tree tree = sent1.get(TreeAnnotation.class);
+			
+			List<Tree> leaves = tree.getLeaves();
+		        
+		    Tree desiredleaf1 = leaves.get(instanceid.getFirstTokenEndIndex()-1);
+		    Tree desiredleaf2 = leaves.get(instanceid.getSecondTokenEndIndex()-1);
+		            
+			List<Tree> path = tree.pathNodeToNode(desiredleaf1, desiredleaf2);
+			path.remove(0);
+			path.remove(path.size()-1);
+			for(Tree node : path)
+				result += " " + node.label();
+		}
+		else
+		{
+			Tree tree1 = sent1.get(TreeAnnotation.class);
+			List<Tree> leaves1 = tree1.getLeaves();
+			Tree desiredleaf1 = leaves1.get(instanceid.getFirstTokenEndIndex()-1);
+			List<Tree> path1 = tree1.pathNodeToNode(desiredleaf1, tree1);
+			path1.remove(0);
+			
+			Tree tree2 = sent2.get(TreeAnnotation.class);
+			List<Tree> leaves2 = tree2.getLeaves();
+		    Tree desiredleaf2 = leaves2.get(instanceid.getSecondTokenEndIndex()-1);
+		    List<Tree> path2 = tree2.pathNodeToNode(tree2, desiredleaf2);
+		    path2.remove(path2.size()-1);
+		    
+		    for(Tree node : path1)
+		    	result += " " + node.label();
+		    for(int i = 1; i < secondsentencenum - firstsentencenum; i++)
+		    	result += " ROOT";
+		    for(Tree node : path2)
+		    	result += " " + node.label();
+		}
+		
+		return result.trim().replaceAll(" ", "-");
+	
+		
+		/*
+		String result = "";
+		
+		if(sent1 == sent2)
+		{
+			while(pathtoroot1.get(pathtoroot1.size()-1) == pathtoroot2.get(pathtoroot2.size()-1))
+			{
+				pathtoroot1.remove(pathtoroot1.size()-1);
+				pathtoroot2.remove(pathtoroot2.size()-1);
+			}
+			
+			for(Tree t : pathtoroot1)
+				result += " " + t.label();
+			result += " " + pathtoroot1.get(pathtoroot1.size()-1).parent().label();
+			Collections.reverse(pathtoroot2);
+			for(Tree t : pathtoroot2)
+				result += " " + t.label();
+		}
+		else
+		{
+			for(Tree t : pathtoroot1)
+				result += " " + t.label();
+			
+			for(int i = 1; i < secondsentencenum - firstsentencenum; i++)
+				result += " " + pathtoroot1.get(pathtoroot1.size()-1).label();
+			
+			Collections.reverse(pathtoroot2);
+			for(Tree t : pathtoroot2)
+				result += " " + t.label();
+		}
+		
+		return result.trim().replaceAll(" ", "-");
+		*/
+ 	}
+ 	
+ 	/*
+ 	private static ArrayList<Tree> getPathToRoot(CoreMap sentence, int tokenindex)
+ 	{
+ 		Tree tree = sentence.get(TreeAnnotation.class);
+        List<Tree> leaves = tree.getLeaves();
+        
+        Tree desiredleaf = leaves.get(tokenindex);
+        
+        ArrayList<Tree> result = new ArrayList<Tree>();
+        Tree node = desiredleaf;
+        
+        
+        System.out.println(tree);
+        
+        
+        node.parent();
+        
+        while((node = node.parent()) != tree)
+        	result.add(node);
+        
+        return result;
+ 	}
+ 	*/
 	
 }
