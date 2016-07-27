@@ -26,7 +26,7 @@ public class InstanceID
 	private int secondtokenstartindex;
 	private int secondtokenendindex;
 	
-	private int heuristiclabel;
+	//private int heuristiclabel;
 	
 	InstanceID(String filename, int firsttokensentencenum, int replacedfirsttokenindex, int firsttokenstartindex, int firsttokenendindex, int secondtokensentencenum, int replacedsecondtokenindex, int secondtokenstartindex, int secondtokenendindex)
 	{
@@ -101,6 +101,7 @@ public class InstanceID
 		return secondtokenendindex;
 	}
 	
+	/*
 	public void setHeuristicLabel(int heuristiclabel)
 	{
 		this.heuristiclabel = heuristiclabel;
@@ -110,7 +111,9 @@ public class InstanceID
 	{
 		return heuristiclabel;
 	}
+	*/
 
+	/*
 	public static HashMap<Integer,ArrayList<InstanceID>> readRelationTypeToInstanceIDOrder(String entityextractedfilename, boolean training)
 	{
 		HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder = new HashMap<Integer,ArrayList<InstanceID>>();
@@ -144,6 +147,7 @@ public class InstanceID
 		
 		return relationtypeToinstanceidorder;
 	}
+	*/
 	
 	
 	public String toString()

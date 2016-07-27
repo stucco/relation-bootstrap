@@ -153,6 +153,18 @@ public class FindAndOrderAllInstances
 									{
 											InstanceID instanceid = new InstanceID(currentfilename, sentencecounter, i, originalindices[i], originalindices[i+1], sentencecounter, j, originalindices[j], originalindices[j+1]);
 										
+											int replacedfirsttokenindex = instanceid.getReplacedFirstTokenIndex();
+											int replacedsecondtokenindex = instanceid.getReplacedSecondTokenIndex();
+										
+											//String[] firstsentence = filelines.get(firsttokensentencenum);
+											String[] firstsentence = tokens;
+											//String[] firsttokenunlemmatizedsentence = unlemmatizedfilelines.get(firsttokensentencenum);
+											String[] firsttokenunlemmatizedsentence = unlemmatizedtokens;
+											//String[] secondsentence = filelines.get(secondtokensentencenum);
+											String[] secondsentence = tokens;
+											//String[] secondtokenunlemmatizedsentence = unlemmatizedfilelines.get(secondtokensentencenum);
+											String[] secondtokenunlemmatizedsentence = unlemmatizedtokens;
+											
 											String label;
 											if(isknownrelationship == null)
 												label = "0";
@@ -161,7 +173,10 @@ public class FindAndOrderAllInstances
 											else
 												label = "-1";
 											
-											relationToprintwriter.get(relationtype).println(label + "\t" + instanceid);
+											if(training)
+												relationToprintwriter.get(relationtype).println(label + " # " + instanceid);
+											else
+												relationToprintwriter.get(relationtype).println(label + " # " + instanceid + " " + firsttokenunlemmatizedsentence[replacedfirsttokenindex] + " " + firstsentence[replacedfirsttokenindex] + " " + secondtokenunlemmatizedsentence[replacedsecondtokenindex] + " " + secondsentence[replacedsecondtokenindex] + " " + unlemmatizedline.trim());
 									}
 								}
 							}

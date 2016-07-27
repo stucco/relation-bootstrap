@@ -55,9 +55,7 @@ public class WriteRelationInstanceFiles
 		//It is kind of dumb to initialize all the printwriters at once right here, but it made sense in an old version of this program.
 		HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTofeaturetypeToprintwriter = initializePrintWriters(featuretype);
 		
-		HashMap<Integer, ArrayList<InstanceID>> relationtypeToinstanceidorder = InstanceID.readRelationTypeToInstanceIDOrder(entityextractedfilename, training);
-		
-		buildAndWriteTrainingInstances(featuretype, relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
+		buildAndWriteTrainingInstances(featuretype, relationtypeTofeaturetypeToprintwriter);
 		
 		//Close the file streams.
 		for(HashMap<String,PrintWriter> contextToprintwriter : relationtypeTofeaturetypeToprintwriter.values())
@@ -118,19 +116,21 @@ public class WriteRelationInstanceFiles
 
 	
 	//Direct the flow to the method for writing the appropriate feature type.
-	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTofeaturetypeToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
+	private static void buildAndWriteTrainingInstances(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTofeaturetypeToprintwriter)
 	{
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
-			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
+			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter);
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGBETWEENCONTEXT))
-			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
+			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter);
 		if(featuretype.equals(FeatureMap.WORDEMBEDDINGAFTERCONTEXT))
-			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
+			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter);
 		if(featuretype.equals(FeatureMap.SYNTACTICPARSETREEPATH))
-			writeSyntacticParseTreePathFile(relationtypeTofeaturetypeToprintwriter, relationtypeToinstanceidorder);
+			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEPATH))
+			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
 	}
 	
-	private static void writeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
+	private static void writeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
 	{
 		//Read in the saved word vectors
 		WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap(entityextractedfilename);
@@ -146,16 +146,35 @@ public class WriteRelationInstanceFiles
 			ZipFile zipfile3 = new ZipFile(ProducedFileGetter.getEntityExtractedText("unlemmatized", training));
 			ZipEntry entry3 = zipfile3.entries().nextElement();
 			BufferedReader unlemmatizedalignedin = new BufferedReader(new InputStreamReader(zipfile3.getInputStream(entry3)));
-		
-		
+			
+
+			InstanceID nextinstanceid;
+			Integer nextheuristiclabel = null;
+			
 			for(Integer relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 			{
 				PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(featuretype);
 			
-				ArrayList<InstanceID> instanceidorder = new ArrayList<InstanceID>(relationtypeToinstanceidorder.get(relationtype));
-				while(instanceidorder.size() > 0)
+				
+				File f = ProducedFileGetter.getRelationshipSVMInstancesOrderFile(entityextractedfilename, relationtype, training);
+				BufferedReader orderedinstancereader = new BufferedReader(new FileReader(f));
+				String nextorderedinstanceline = orderedinstancereader.readLine();
+				if(nextorderedinstanceline == null)
+					nextinstanceid = null;
+				else
 				{
-					String desiredfilename = instanceidorder.get(0).getFileName();
+					String[] orderedinstancesplitline = nextorderedinstanceline.split(" ");
+					nextinstanceid = new InstanceID(orderedinstancesplitline[2]);
+					nextheuristiclabel = Integer.parseInt(orderedinstancesplitline[0]);
+				}
+				
+				
+				while(nextinstanceid != null)
+				{
+				//ArrayList<InstanceID> instanceidorder = new ArrayList<InstanceID>(relationtypeToinstanceidorder.get(relationtype));
+				//while(instanceidorder.size() > 0)
+				//{
+					String desiredfilename = nextinstanceid.getFileName();
 				
 					ArrayList<String[]> filelines = getLinesAssociatedWithOneFile(desiredfilename, in, zipfile, entry);
 					ArrayList<String[]> unlemmatizedfilelines = getLinesAssociatedWithOneFile(desiredfilename, unlemmatizedalignedin, zipfile3, entry3);
@@ -166,19 +185,16 @@ public class WriteRelationInstanceFiles
 					for(String[] sentence : unlemmatizedfilelines)
 						originalindices.add(PrintPreprocessedDocuments.getOriginalTokenIndexesFromPreprocessedLine(sentence));
 				
-					while(instanceidorder.size() > 0 && instanceidorder.get(0).getFileName().equals(desiredfilename))
+					//while(instanceidorder.size() > 0 && instanceidorder.get(0).getFileName().equals(desiredfilename))
+					while(nextinstanceid != null && nextinstanceid.getFileName().equals(desiredfilename))
 					{
-						InstanceID instanceid = instanceidorder.remove(0);
-					
-						int firsttokensentencenum = instanceid.getFirstTokenSentenceNum();
-						int replacedfirsttokenindex = instanceid.getReplacedFirstTokenIndex();
-						int secondtokensentencenum = instanceid.getSecondTokenSentenceNum();
-						int replacedsecondtokenindex = instanceid.getReplacedSecondTokenIndex();
+						int firsttokensentencenum = nextinstanceid.getFirstTokenSentenceNum();
+						int replacedfirsttokenindex = nextinstanceid.getReplacedFirstTokenIndex();
+						int secondtokensentencenum = nextinstanceid.getSecondTokenSentenceNum();
+						int replacedsecondtokenindex = nextinstanceid.getReplacedSecondTokenIndex();
 					
 						String[] firstsentence = filelines.get(firsttokensentencenum);
-						String[] firsttokenunlemmatizedsentence = unlemmatizedfilelines.get(firsttokensentencenum);
 						String[] secondsentence = filelines.get(secondtokensentencenum);
-						String[] secondtokenunlemmatizedsentence = unlemmatizedfilelines.get(secondtokensentencenum);
 					
 						ArrayList<String> context = new ArrayList<String>();
 						if(featuretype.equals(FeatureMap.WORDEMBEDDINGBEFORECONTEXT))
@@ -214,32 +230,30 @@ public class WriteRelationInstanceFiles
 						}
 					
 						//Now, actually build the SVM_light style string representation of the instance.
-						String instanceline = buildOutputLineFromVector(instanceid.getHeuristicLabel(), wvm.getContextVector(context));
+						String instanceline = buildOutputLineFromVector(nextheuristiclabel, wvm.getContextVector(context), context.size());
 				
-				
-						//SVM_light format allows us to add comments to the end of lines.  So to make the line more human-interpretable,
-						//add the entity names to the end of the line.
-						if(training)
-							instanceline += " # " + instanceid;
-						else
-						{
-							String unlemmatizedtokens = "";
-							for(int i = firsttokensentencenum; i <= secondtokensentencenum; i++)
-							{
-								String[] unlemmatizedline = unlemmatizedfilelines.get(i);
-								for(String unlemmatizedword : unlemmatizedline)
-									unlemmatizedtokens += " " + unlemmatizedword;
-							}
-							
-							instanceline += " # " + instanceid + " " + firsttokenunlemmatizedsentence[replacedfirsttokenindex] + " " + firstsentence[replacedfirsttokenindex] + " " + secondtokenunlemmatizedsentence[replacedsecondtokenindex] + " " + secondsentence[replacedsecondtokenindex] + " " + unlemmatizedtokens.trim();
-						}
+						//Add a comment describing what the instance is about (originally written in FindAndOrderAllInstances.
+						String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+						instanceline += " " + comment;
 				
 						//And finally, print it to the appropriate file using the PrintWriter we 
 						//made earlier.
 						out.println(instanceline);
 					//}
+						
+
+						nextorderedinstanceline = orderedinstancereader.readLine();
+						if(nextorderedinstanceline == null)
+							nextinstanceid = null;
+						else
+						{
+							String[] orderedinstancesplitline = nextorderedinstanceline.split(" ");
+							nextinstanceid = new InstanceID(orderedinstancesplitline[2]);
+							nextheuristiclabel = Integer.parseInt(orderedinstancesplitline[0]);
+						}
 					}
 				}
+				orderedinstancereader.close();
 			}
 		}catch(IOException e)
 		{
@@ -250,7 +264,7 @@ public class WriteRelationInstanceFiles
 	}
 	
 	
- 	public static String buildOutputLineFromVector(Boolean isknownrelationship, double[] contextvectors)
+ 	public static String buildOutputLineFromVector(Boolean isknownrelationship, double[] contextvectors, int contextlength)
 	{
 		String result = "";
 		if(isknownrelationship == null)
@@ -262,23 +276,26 @@ public class WriteRelationInstanceFiles
 		
 		for(int i = 0; i < contextvectors.length; i++)
 			result += " " + (i+1) + ":" + formatter.format(contextvectors[i]);
+		result += " " + "TokenCount:" + contextlength;
 		
 		return result;
 	}
  	
- 	public static String buildOutputLineFromVector(int label, double[] contextvectors)
+ 	public static String buildOutputLineFromVector(int label, double[] contextvectors, int contextlength)
  	{
  		if(label == -1)
- 			return buildOutputLineFromVector(false, contextvectors);
+ 			return buildOutputLineFromVector(false, contextvectors, contextlength);
  		else if(label == 1)
- 			return buildOutputLineFromVector(true, contextvectors);
+ 			return buildOutputLineFromVector(true, contextvectors, contextlength);
  		else if(label == 0)
- 			return buildOutputLineFromVector(null, contextvectors);
+ 			return buildOutputLineFromVector(null, contextvectors, contextlength);
 
 		return null;
  	}
 	
  	
+ 	//This method is intended to let us repeatedly find the section of a file beginning with a given line (desiredfilename)
+ 	//without having to reopen or reread the entirety of the file every time we want to find a section.  
  	public static ArrayList<String[]> getLinesAssociatedWithOneFile(String desiredfilename, BufferedReader in, ZipFile zipfile, ZipEntry entry)
  	{
  		ArrayList<String[]> resultlines = new ArrayList<String[]>();
@@ -334,40 +351,102 @@ public class WriteRelationInstanceFiles
  	}
 	
  	
- 	public static void writeSyntacticParseTreePathFile(HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter, HashMap<Integer,ArrayList<InstanceID>> relationtypeToinstanceidorder)
+ 	//This method constructs parse tree paths out of the instances.  It is a good example of how to use annotations provided 
+ 	//by the entity extractor in the .ser.gz files.
+ 	public static void writeParseTreePathFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
  	{	 
  		String currentfilename = null;
  		List<CoreMap> sentences = null;
  		
-		for(Integer relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
+		InstanceID nextinstanceid;
+		Integer nextheuristiclabel = null;
+		String desiredfilename;
+ 		
+		try
 		{
-			PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(FeatureMap.SYNTACTICPARSETREEPATH);
-			
-			ArrayList<InstanceID> instanceidorder = new ArrayList<InstanceID>(relationtypeToinstanceidorder.get(relationtype));
-			while(instanceidorder.size() > 0)
+			//We're creating these features for each relation type.
+			for(Integer relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 			{
-				InstanceID instanceid = instanceidorder.remove(0);
-					
-				String desiredfilename = instanceid.getFileName();
-				if(!desiredfilename.equals(currentfilename))
+				//Construct a PrintWriter that prints to the file for features of this type for this relation type.
+				PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(FeatureMap.SYNTACTICPARSETREEPATH);
+			
+				//We enforce a certain order on our instances because for sort of complicated reasons, this means we do not have
+				//to hold as many things in memory.  So FindAndOrderAllInstances wrote a file listing all the instances we
+				//are interested in using, and we have to process the instances in the order provided by the file.  So read
+				//the file it wrote to process the instances in it one-by-one.
+				File g = ProducedFileGetter.getRelationshipSVMInstancesOrderFile(entityextractedfilename, relationtype, training);
+				BufferedReader orderedinstancereader = new BufferedReader(new FileReader(g));
+				String nextorderedinstanceline = orderedinstancereader.readLine();
+				if(nextorderedinstanceline == null)
+					nextinstanceid = null;
+				else
 				{
-					File f = new File(ProducedFileGetter.getEntityExtractedSerializedDirectory(training), desiredfilename);
-					Annotation deserDoc = EntityLabeler.deserializeAnnotatedDoc(f.getAbsolutePath());
-					sentences = deserDoc.get(SentencesAnnotation.class);
-					currentfilename = desiredfilename;
+					String[] orderedinstancesplitline = nextorderedinstanceline.split(" ");
+					nextinstanceid = new InstanceID(orderedinstancesplitline[2]);
+					nextheuristiclabel = Integer.parseInt(orderedinstancesplitline[0]);
 				}
+			
+				//While there are still more instances in the file we're reading:
+				while(nextinstanceid != null)
+				{
+					//There are likely to be many instances associated with each entity-annotated (.ser.gz) file.  Reading 
+					//these files is an expensive operation, so we only want to read each file once.  So read file associated'
+					//with nextinstanceid in only if we did not already read it in.
+					desiredfilename = nextinstanceid.getFileName();
+					if(!desiredfilename.equals(currentfilename))
+					{
+						File f = new File(ProducedFileGetter.getEntityExtractedSerializedDirectory(training), desiredfilename);
+						Annotation deserDoc = EntityLabeler.deserializeAnnotatedDoc(f.getAbsolutePath());
+						
+						//These are the annotated sentences from the entity-annotated file.  They have annotations like POS
+						//tags and lemmas, and parse trees, and hopefully in the next version of the VM, coreference and 
+						//dependency trees.
+						sentences = deserDoc.get(SentencesAnnotation.class);
+						
+						currentfilename = desiredfilename;
+					}
 					
-				String parsetreepath = getParseTreePath(instanceid, sentences);
+					//Get a string representation of the parse tree path between entities represented by nextinstanceid.
+					String parsetreepath = null;
+					if(featuretype.equals(FeatureMap.SYNTACTICPARSETREEPATH))
+						parsetreepath = getSyntacticParseTreePath(nextinstanceid, sentences);
+					else if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEPATH))
+						parsetreepath = getDependencyParseTreePath(nextinstanceid, sentences);
 					
-				out.println(instanceid.getHeuristicLabel() + " " + parsetreepath + ":1" + " # " + instanceid);
-			}
 				
-			out.close();
+					//Write this instance as a relation instance line consisting of only one feature (the parse tree path)
+					//including the heuristic label and comment extracted from the file written by FindAndOrderAllInstances.
+					String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+					out.println(nextheuristiclabel + " " + parsetreepath + ":1" + " " + comment);
+				
+				
+					//Read in the next instance from FindAndOrderAllInstances's file.
+					nextorderedinstanceline = orderedinstancereader.readLine();
+					if(nextorderedinstanceline == null)
+						nextinstanceid = null;
+					else
+					{
+						String[] orderedinstancesplitline = nextorderedinstanceline.split(" ");
+						nextinstanceid = new InstanceID(orderedinstancesplitline[2]);
+						nextheuristiclabel = Integer.parseInt(orderedinstancesplitline[0]);
+					}
+				}
+				
+				out.close();
+				orderedinstancereader.close();
+			}
+		}catch(IOException e)
+		{
+			System.out.println(e);
+			e.printStackTrace();
+			System.exit(3);
 		}
  	}	
  	
- 	private static String getParseTreePath(InstanceID instanceid, List<CoreMap> sentences)
+ 	//Given an instance, construct a string Comprising the syntactic parse tree labels on the path between the last words in each entity.
+ 	private static String getSyntacticParseTreePath(InstanceID instanceid, List<CoreMap> sentences)
  	{
+ 		//sentences is a list of the (annotated) sentences in this document.  Get the sentence in which each entity appears.
  		int firstsentencenum = instanceid.getFirstTokenSentenceNum();
 		CoreMap sent1 = sentences.get(firstsentencenum);
 		//ArrayList<Tree> pathtoroot1 = getPathToRoot(sent1, instanceid.getFirstTokenEndIndex()-1);
@@ -378,6 +457,8 @@ public class WriteRelationInstanceFiles
 		
 		
 		String result = "";
+		
+		//If the entities occur in the same sentence, the path will be directly between the two entities' last words. 
 		if(sent1 == sent2)
 		{
 			Tree tree = sent1.get(TreeAnnotation.class);
@@ -393,7 +474,7 @@ public class WriteRelationInstanceFiles
 			for(Tree node : path)
 				result += " " + node.label();
 		}
-		else
+		else	//If the entities do not occur in the same sentence, the path goes all the way up to the root node from the first entity, across the root nodes of all the intervening sentences, then back down from sentence 2's root to entity 2's last word.
 		{
 			Tree tree1 = sent1.get(TreeAnnotation.class);
 			List<Tree> leaves1 = tree1.getLeaves();
@@ -452,7 +533,69 @@ public class WriteRelationInstanceFiles
 		return result.trim().replaceAll(" ", "-");
 		*/
  	}
- 	
+
+ 	//Given an instance, construct a string Comprising the syntactic parse tree labels on the path between the last words in each entity.
+ 	private static String getDependencyParseTreePath(InstanceID instanceid, List<CoreMap> sentences)
+ 	{
+ 		//sentences is a list of the (annotated) sentences in this document.  Get the sentence in which each entity appears.
+ 		int firstsentencenum = instanceid.getFirstTokenSentenceNum();
+		CoreMap sent1 = sentences.get(firstsentencenum);
+		//ArrayList<Tree> pathtoroot1 = getPathToRoot(sent1, instanceid.getFirstTokenEndIndex()-1);
+
+		int secondsentencenum = instanceid.getSecondTokenSentenceNum();
+		CoreMap sent2 = sentences.get(secondsentencenum);
+		//ArrayList<Tree> pathtoroot2 = getPathToRoot(sent2, instanceid.getSecondTokenEndIndex()-1);
+		
+		
+		String result = "";
+		
+		//If the entities occur in the same sentence, the path will be directly between the two entities' last words. 
+		if(sent1 == sent2)
+		{
+			//Fill in with code similar to  that in getSyntacticParseTreePath, but modified for handling dependencies.
+		}
+		else	//If the entities do not occur in the same sentence, the path goes all the way up to the root node from the first entity, across the root nodes of all the intervening sentences, then back down from sentence 2's root to entity 2's last word.
+		{
+			//Fill in with code similar to  that in getSyntacticParseTreePath, but modified for handling dependencies.
+		}
+		
+		return result.trim().replaceAll(" ", "-");
+	
+		
+		/*
+		String result = "";
+		
+		if(sent1 == sent2)
+		{
+			while(pathtoroot1.get(pathtoroot1.size()-1) == pathtoroot2.get(pathtoroot2.size()-1))
+			{
+				pathtoroot1.remove(pathtoroot1.size()-1);
+				pathtoroot2.remove(pathtoroot2.size()-1);
+			}
+			
+			for(Tree t : pathtoroot1)
+				result += " " + t.label();
+			result += " " + pathtoroot1.get(pathtoroot1.size()-1).parent().label();
+			Collections.reverse(pathtoroot2);
+			for(Tree t : pathtoroot2)
+				result += " " + t.label();
+		}
+		else
+		{
+			for(Tree t : pathtoroot1)
+				result += " " + t.label();
+			
+			for(int i = 1; i < secondsentencenum - firstsentencenum; i++)
+				result += " " + pathtoroot1.get(pathtoroot1.size()-1).label();
+			
+			Collections.reverse(pathtoroot2);
+			for(Tree t : pathtoroot2)
+				result += " " + t.label();
+		}
+		
+		return result.trim().replaceAll(" ", "-");
+		*/
+ 	}
  	/*
  	private static ArrayList<Tree> getPathToRoot(CoreMap sentence, int tokenindex)
  	{
