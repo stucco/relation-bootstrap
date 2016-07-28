@@ -76,8 +76,8 @@ def init_board_relationcontexts():
             xholder = np.array(x)
             comment = line.split('#', 1)[1].rstrip().split(' ')
             
-            firstentity = comment[3]
-            secondentity = comment[5]
+            firstentity = comment[2]
+            secondentity = comment[4]
             firstentityindex = 9999999
             secondentityindex = 0
             for i in range(6, len(comment)):
@@ -85,7 +85,7 @@ def init_board_relationcontexts():
                     firstentityindex = min(firstentityindex, i)
                 if comment[i] == secondentity:
                     secondentityindex = max(secondentityindex, i)
-            
+                    
             #valuesTotext.append([xholder, comment])
             valuesTotext[np.array_str(xholder)] = " ".join(comment[6:firstentityindex]) + "\t" + firstentity + "\t" + " ".join(comment[firstentityindex+1:secondentityindex]) + "\t" + secondentity + "\t" + " ".join(comment[secondentityindex+1:len(comment)])
             

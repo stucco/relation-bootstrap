@@ -26,6 +26,8 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.semgraph.SemanticGraph;
+import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
 import edu.stanford.nlp.util.CoreMap;
@@ -368,7 +370,7 @@ public class WriteRelationInstanceFiles
 			for(Integer relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 			{
 				//Construct a PrintWriter that prints to the file for features of this type for this relation type.
-				PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(FeatureMap.SYNTACTICPARSETREEPATH);
+				PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(featuretype);
 			
 				//We enforce a certain order on our instances because for sort of complicated reasons, this means we do not have
 				//to hold as many things in memory.  So FindAndOrderAllInstances wrote a file listing all the instances we
@@ -545,6 +547,10 @@ public class WriteRelationInstanceFiles
 		int secondsentencenum = instanceid.getSecondTokenSentenceNum();
 		CoreMap sent2 = sentences.get(secondsentencenum);
 		//ArrayList<Tree> pathtoroot2 = getPathToRoot(sent2, instanceid.getSecondTokenEndIndex()-1);
+		
+		
+		SemanticGraph dependencies = sent1.get(CollapsedCCProcessedDependenciesAnnotation.class);
+		System.out.println(dependencies);
 		
 		
 		String result = "";

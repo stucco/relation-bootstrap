@@ -48,6 +48,8 @@ public class Test
 	
 	public static void main(String[] args) throws Exception
 	{
+		writeSerGzToText();
+		
 		//findExamples();
 		
 		//countInstancesInDifferentClasses();
@@ -56,7 +58,7 @@ public class Test
 		
 		//testCurrentWorkingDirectory();
 		
-		findNearestWords();
+		//findNearestWords();
 		
 		//checkWorkingDirectories();
 		
@@ -343,13 +345,15 @@ public class Test
 		{
 			if(!testword.startsWith("["))
 				continue;
-				
+			//if(testword.equals("hamburger") || testword.equals("house") || testword.equals("cat") || testword.equals("boat") || testword.equals("malware"))
+			
 			ArrayList<ObjectRank> rankedwords = wvm.findNearestWords(testword);
 		
 			System.out.print(testword);
 			for(int i = 1; i < rankedwords.size() && i < 20; i++)
 				System.out.print("\t" + rankedwords.get(i).obj + "(" + rankedwords.get(i).value + ")");
 			System.out.println();
+			
 		}
 	}
 	
@@ -519,5 +523,51 @@ public class Test
 		in.close();
 	}
 	
+	private static void writeSerGzToText() throws IOException
+	{
+		File directory = new File("/Users/p5r/git/relation-bootstrap/DataFiles/Training/EntityExtractedSerialized/");
+		File outputdirectory = new File("/Users/p5r/Downloads/sergztexts/");
+		outputdirectory.mkdirs();
+		
+		
+		for(File f : directory.listFiles())
+		{
+			if(!f.getName().endsWith(".ser.gz"))
+				continue;
+			
+			
+			String exampleText = getExampleTextFromSerGz(f);
+			
+			
+			File g = new File(outputdirectory, f.getName());
+			PrintWriter out = new PrintWriter(new FileWriter(g));
+			out.println(exampleText);
+			out.close();
+		}
+	}
+	
+	private static String getExampleTextFromSerGz(File f)
+	{
+		String result = "";
+		
+			Annotation deserDoc = EntityLabeler.deserializeAnnotatedDoc(f.getAbsolutePath());
+			List<CoreMap> sentences = deserDoc.get(SentencesAnnotation.class);
+			for (int sentencenum = 0; sentencenum < sentences.size(); sentencenum++) 
+			{
+				CoreMap sentence = sentences.get(sentencenum);
+				
+				List<CoreLabel> labels = sentence.get(TokensAnnotation.class);
+				
+			 	for (int i = 0; i < labels.size(); i++) 
+			 	{
+			 		CoreLabel token = labels.get(i);
+			 		String tokenstring = token.get(TextAnnotation.class);
+			 		result += " " + tokenstring;
+			 	}
+			 	result = result.trim() + "\n";
+			}
+			
+		return result;
+	}
 	
 }
