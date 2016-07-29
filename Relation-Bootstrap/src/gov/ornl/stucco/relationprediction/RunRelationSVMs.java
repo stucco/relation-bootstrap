@@ -69,13 +69,13 @@ public class RunRelationSVMs
 		File libsvmjar = ProducedFileGetter.getLibSVMJarFile();
 		
 		
-		HashMap<Integer, ArrayList<InstanceID>> relationtypeToinstanceidorder = InstanceID.readRelationTypeToInstanceIDOrder(entityextractedfilename, true);
+		//HashMap<Integer, ArrayList<InstanceID>> relationtypeToinstanceidorder = InstanceID.readRelationTypeToInstanceIDOrder(entityextractedfilename, true);
 		
 		
 		//Train a classifier for each relationship type.
 		for(int relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
 		{
-			ArrayList<InstanceID> instanceidorder = relationtypeToinstanceidorder.get(relationtype);
+			//ArrayList<InstanceID> instanceidorder = relationtypeToinstanceidorder.get(relationtype);
 			
 			
 			//For testing, we will only pay attention to one relationship type, as this program is about 50 times as expensive to run for all relationship types.
@@ -104,7 +104,7 @@ public class RunRelationSVMs
 					
 					
 						//Write the training data to a temporary file.  Since testing is, by comparison, super fast, run testing too.
-						writeSVMFiles(featuremap, relationtype, instanceidorder, testfold1, testfold2, entityextractedfilename, featuretypes, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
+						writeSVMFiles(featuremap, relationtype, testfold1, testfold2, entityextractedfilename, featuretypes, trainingfile, trainingfilecomments, testfile1, testfile1comments, testfile2, testfile2comments);
 						
 					
 						//Our SVMs have two parameters, c and gamma.  Iterate over all combinations of them so that we can do a grid search. (Gamma is not needed for linear kernels, so we set the gammas array to have only one value in readArgs() if the kernel type chosen was Linear).
@@ -213,7 +213,7 @@ public class RunRelationSVMs
 	}
 		
 	
-	private static void writeSVMFiles(FeatureMap featuremap, int relationtype, ArrayList<InstanceID> instanceidorder, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String featuretypes, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
+	private static void writeSVMFiles(FeatureMap featuremap, int relationtype, Integer excludedfold1, Integer excludedfold2, String entityextractedfilename, String featuretypes, File trainingfile, File trainingfilecomments, File testfile1, File testfile1comments, File testfile2, File testfile2comments) 
 	{
 		try
 		{
@@ -254,7 +254,15 @@ public class RunRelationSVMs
 					whichfold = isInWhichFold(line, excludedfold1, excludedfold2);
 					
 					String[] instanceAndcomments = line.split("#");
+					
+					if(comment != null && !comment.equals(instanceAndcomments[1]))
+					{
+						System.out.println("Error: misaligned instance files.");
+						new Exception().printStackTrace();
+						System.exit(3);
+					}
 					comment = instanceAndcomments[1];
+					
 					
 					String[] labelAndfeatures = instanceAndcomments[0].split(" ");
 					label = labelAndfeatures[0];
