@@ -197,6 +197,14 @@ public class ProducedFileGetter
 	}
 	
 	
+	public static File getRelevantTermsFile()
+	{
+		File result = new File(datafilesdirectory, "dictionaries/relevant_terms.txt");
+		
+		return result;
+	}
+	
+	
 	public static File getFeatureMapFile(String entityextractedfilename, String featuretypes, int relationtype)
 	{
 		File dir = new File(producedfilesdirectory, "FeatureMapFiles/");
