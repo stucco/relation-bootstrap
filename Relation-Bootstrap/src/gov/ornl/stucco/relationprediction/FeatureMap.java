@@ -12,9 +12,24 @@ public class FeatureMap extends HashMap<String,Integer>
 	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity.	
 	public static final String WORDEMBEDDINGBETWEENCONTEXT = "b";	//Context between entities.
 	public static final String WORDEMBEDDINGAFTERCONTEXT = "c";	//Context after second entity.
+	
 	public static final String SYNTACTICPARSETREEPATH = "d";	//String of syntactic parse tree node labels between entities.  Entities are represented by their last word.
 	
-	public static final String DEPENDENCYPARSETREEPATH = "e";	//String of dependency tree node labels between entities.  Entities are represented by their last word.
+	public static final String DEPENDENCYPARSETREEEDGEPATH = "e";	//String of dependency tree edge labels between entities.  Entities are represented by their last word.
+	public static final String DEPENDENCYPARSETREENODEPATH = "f";	//String of dependency tree node lemmas between entities.  Entities are represented by their last word.
+	public static final String DEPENDENCYPARSETREEEDGENODEPATH = "g";	//String of dependency tree edge labels and node lemmas between entities.  Entities are represented by their last word.
+	
+	public static final String DEPENDENCYPARSETREENODECONTEXTS = "h";	//Collect the node lemmas in the dependency path between the cyber entities, then make an embedding feature from them just as with the context features.
+	
+	
+	//A path is a sequence of items.  To generate these subpath features, we simply take the corresponding path feature from above
+	//and build features out of all possible contiguous subsequences (of length up to 5) of items from the list.
+	public static final String SYNTACTICPARSETREESUBPATHS = "i";
+	
+	public static final String DEPENDENCYPARSETREEEDGESUBPATHS = "j";	
+	public static final String DEPENDENCYPARSETREENODESUBPATHS = "k";	
+	public static final String DEPENDENCYPARSETREEEDGENODESUBPATHS = "l";	
+	
 	
 	
 	public static final String ALWAYSPREDICTPOSITIVECODE = "z";	//Warning.  This is not a code that ever gets used in a command line arguments.  It is merely used internally to determine which file to write positive prediction results to.

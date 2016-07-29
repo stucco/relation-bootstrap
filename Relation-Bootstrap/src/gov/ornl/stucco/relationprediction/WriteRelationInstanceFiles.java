@@ -23,11 +23,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation;
+import edu.stanford.nlp.semgraph.SemanticGraphEdge;
+import edu.stanford.nlp.trees.GrammaticalRelation;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
 import edu.stanford.nlp.util.CoreMap;
@@ -48,6 +51,7 @@ public class WriteRelationInstanceFiles
 	
 	
 	private static DecimalFormat formatter = new DecimalFormat(".0000");
+	private static final String emptystringcode = "ZZZ";	//Used to denote a dependency node path of length 0.
 	
 	
 	public static void main(String[] args)
@@ -128,7 +132,21 @@ public class WriteRelationInstanceFiles
 			writeContextFile(featuretype, relationtypeTofeaturetypeToprintwriter);
 		if(featuretype.equals(FeatureMap.SYNTACTICPARSETREEPATH))
 			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
-		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEPATH))
+		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH))
+			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODEPATH))
+			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODECONTEXTS))
+			writeDependencyContextFile(relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.SYNTACTICPARSETREESUBPATHS))
+			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGESUBPATHS))
+			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODESUBPATHS))
+			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODESUBPATHS))
 			writeParseTreePathFile(featuretype, relationtypeTofeaturetypeToprintwriter);
 	}
 	
@@ -412,14 +430,35 @@ public class WriteRelationInstanceFiles
 					String parsetreepath = null;
 					if(featuretype.equals(FeatureMap.SYNTACTICPARSETREEPATH))
 						parsetreepath = getSyntacticParseTreePath(nextinstanceid, sentences);
-					else if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEPATH))
-						parsetreepath = getDependencyParseTreePath(nextinstanceid, sentences);
+					else if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH))
+						parsetreepath = getDependencyParseTreePath(featuretype, nextinstanceid, sentences);
+					else if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODEPATH))
+						parsetreepath = getDependencyParseTreePath(featuretype, nextinstanceid, sentences);
+					else if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						parsetreepath = getDependencyParseTreePath(featuretype, nextinstanceid, sentences);
+					else if(featuretype.equals(FeatureMap.SYNTACTICPARSETREESUBPATHS))
+						parsetreepath = getSyntacticParseTreePath(nextinstanceid, sentences);
+					else if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGESUBPATHS))
+						parsetreepath = getDependencyParseTreePath(FeatureMap.DEPENDENCYPARSETREEEDGEPATH, nextinstanceid, sentences);
+					else if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODESUBPATHS))
+						parsetreepath = getDependencyParseTreePath(FeatureMap.DEPENDENCYPARSETREENODEPATH, nextinstanceid, sentences);
+					else if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODESUBPATHS))
+						parsetreepath = getDependencyParseTreePath(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH, nextinstanceid, sentences);
 					
 				
 					//Write this instance as a relation instance line consisting of only one feature (the parse tree path)
 					//including the heuristic label and comment extracted from the file written by FindAndOrderAllInstances.
 					String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
-					out.println(nextheuristiclabel + " " + parsetreepath + ":1" + " " + comment);
+					if(featuretype.equals(FeatureMap.SYNTACTICPARSETREEPATH) || 
+							featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH) || 
+							featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODEPATH) || 
+							featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						out.println(nextheuristiclabel + " " + parsetreepath + ":1" + " " + comment);
+					else if(featuretype.equals(FeatureMap.SYNTACTICPARSETREESUBPATHS) || 
+							featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGESUBPATHS) || 
+							featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODESUBPATHS) || 
+							featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODESUBPATHS))
+						out.println(nextheuristiclabel + " " + getSubPathFeaturesLine(parsetreepath) + " " + comment);
 				
 				
 					//Read in the next instance from FindAndOrderAllInstances's file.
@@ -537,7 +576,7 @@ public class WriteRelationInstanceFiles
  	}
 
  	//Given an instance, construct a string Comprising the syntactic parse tree labels on the path between the last words in each entity.
- 	private static String getDependencyParseTreePath(InstanceID instanceid, List<CoreMap> sentences)
+ 	private static String getDependencyParseTreePath(String featuretype, InstanceID instanceid, List<CoreMap> sentences)
  	{
  		//sentences is a list of the (annotated) sentences in this document.  Get the sentence in which each entity appears.
  		int firstsentencenum = instanceid.getFirstTokenSentenceNum();
@@ -549,8 +588,6 @@ public class WriteRelationInstanceFiles
 		//ArrayList<Tree> pathtoroot2 = getPathToRoot(sent2, instanceid.getSecondTokenEndIndex()-1);
 		
 		
-		SemanticGraph dependencies = sent1.get(CollapsedCCProcessedDependenciesAnnotation.class);
-		System.out.println(dependencies);
 		
 		
 		String result = "";
@@ -558,72 +595,224 @@ public class WriteRelationInstanceFiles
 		//If the entities occur in the same sentence, the path will be directly between the two entities' last words. 
 		if(sent1 == sent2)
 		{
-			//Fill in with code similar to  that in getSyntacticParseTreePath, but modified for handling dependencies.
+			SemanticGraph dependencies1 = sent1.get(CollapsedCCProcessedDependenciesAnnotation.class);
+			
+			IndexedWord iw1 = dependencies1.getNodeByIndexSafe(instanceid.getFirstTokenEndIndex());	//The +1s are because the nodes this method looks through are 1-indexed, apparently.
+			IndexedWord iw2 = dependencies1.getNodeByIndexSafe(instanceid.getSecondTokenEndIndex());
+			
+			List<IndexedWord> pathwords1 = dependencies1.getShortestUndirectedPathNodes(iw1, iw2);
+			for(int i = 1; i < pathwords1.size(); i++)
+			{
+				SemanticGraphEdge sge = dependencies1.getEdge(pathwords1.get(i-1), pathwords1.get(i));
+				
+				if(sge == null)
+				{
+					sge = dependencies1.getEdge(pathwords1.get(i), pathwords1.get(i-1));
+					if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						result += " E" + sge.getRelation().getShortName() + "<";	//E is for Edge.
+				}
+				else
+				{
+					if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						result += " E" + sge.getRelation().getShortName() + ">";
+				}
+				
+				if(i != pathwords1.size()-1)
+					if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						result += " N" + pathwords1.get(i).lemma().toLowerCase();	//N is for Node.
+			}
 		}
 		else	//If the entities do not occur in the same sentence, the path goes all the way up to the root node from the first entity, across the root nodes of all the intervening sentences, then back down from sentence 2's root to entity 2's last word.
 		{
-			//Fill in with code similar to  that in getSyntacticParseTreePath, but modified for handling dependencies.
-		}
-		
-		return result.trim().replaceAll(" ", "-");
-	
-		
-		/*
-		String result = "";
-		
-		if(sent1 == sent2)
-		{
-			while(pathtoroot1.get(pathtoroot1.size()-1) == pathtoroot2.get(pathtoroot2.size()-1))
+			SemanticGraph dependencies1 = sent1.get(CollapsedCCProcessedDependenciesAnnotation.class);
+			IndexedWord iw1 = dependencies1.getNodeByIndexSafe(instanceid.getFirstTokenEndIndex());	//The +1s are because the nodes this method looks through are 1-indexed, apparently.
+			
+			List<IndexedWord> pathwords1 = dependencies1.getPathToRoot(iw1);
+			for(int i = 1; i < pathwords1.size(); i++)
 			{
-				pathtoroot1.remove(pathtoroot1.size()-1);
-				pathtoroot2.remove(pathtoroot2.size()-1);
+				SemanticGraphEdge sge = dependencies1.getEdge(pathwords1.get(i-1), pathwords1.get(i));
+				if(sge == null)
+				{
+					sge = dependencies1.getEdge(pathwords1.get(i), pathwords1.get(i-1));
+					if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						result += " E" + sge.getRelation().getShortName() + "<";
+				}
+				else
+				{
+					if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						result += " E" + sge.getRelation().getShortName() + ">";
+				}
+				
+				if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+					result += " N" + pathwords1.get(i).lemma().toLowerCase();
 			}
 			
-			for(Tree t : pathtoroot1)
-				result += " " + t.label();
-			result += " " + pathtoroot1.get(pathtoroot1.size()-1).parent().label();
-			Collections.reverse(pathtoroot2);
-			for(Tree t : pathtoroot2)
-				result += " " + t.label();
-		}
-		else
-		{
-			for(Tree t : pathtoroot1)
-				result += " " + t.label();
 			
-			for(int i = 1; i < secondsentencenum - firstsentencenum; i++)
-				result += " " + pathtoroot1.get(pathtoroot1.size()-1).label();
+			 for(int i = 1; i < secondsentencenum - firstsentencenum; i++)
+				 result+= " ROOTEDGE";
 			
-			Collections.reverse(pathtoroot2);
-			for(Tree t : pathtoroot2)
-				result += " " + t.label();
+
+			SemanticGraph dependencies2 = sent2.get(CollapsedCCProcessedDependenciesAnnotation.class);
+			IndexedWord iw2 = dependencies2.getNodeByIndexSafe(instanceid.getSecondTokenEndIndex());
+			
+			List<IndexedWord> pathwords2 = dependencies2.getPathToRoot(iw2);
+			Collections.reverse(pathwords2);
+			for(int i = 1; i < pathwords2.size(); i++)
+			{
+				SemanticGraphEdge sge = dependencies2.getEdge(pathwords2.get(i-1), pathwords2.get(i));
+				if(sge == null)
+				{
+					sge = dependencies2.getEdge(pathwords2.get(i), pathwords2.get(i-1));
+					if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						result += " E" + sge.getRelation().getShortName() + "<";
+				}
+				else
+				{
+					if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+						result += " E" + sge.getRelation().getShortName() + ">";
+				}
+				
+				if(featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODEPATH) || featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
+					result += " N" + pathwords2.get(i-1).lemma().toLowerCase();
+			}
 		}
 		
-		return result.trim().replaceAll(" ", "-");
-		*/
+		result = result.trim().replaceAll(" ", "-");
+		if(result.equals(""))
+			result = emptystringcode;
+		return result;
  	}
- 	/*
- 	private static ArrayList<Tree> getPathToRoot(CoreMap sentence, int tokenindex)
- 	{
- 		Tree tree = sentence.get(TreeAnnotation.class);
-        List<Tree> leaves = tree.getLeaves();
-        
-        Tree desiredleaf = leaves.get(tokenindex);
-        
-        ArrayList<Tree> result = new ArrayList<Tree>();
-        Tree node = desiredleaf;
-        
-        
-        System.out.println(tree);
-        
-        
-        node.parent();
-        
-        while((node = node.parent()) != tree)
-        	result.add(node);
-        
-        return result;
- 	}
- 	*/
+
+ 	
+ 	//This method constructs parse tree paths out of the instances.  It is a good example of how to use annotations provided 
+ 	//by the entity extractor in the .ser.gz files.
+ 	public static void writeDependencyContextFile(HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
+ 	{	 
+		//Read in the saved word vectors
+		WordToVectorMap wvm = WordToVectorMap.getWordToVectorMap(entityextractedfilename);
+		
+		
+ 		String currentfilename = null;
+ 		List<CoreMap> sentences = null;
+ 		
+		InstanceID nextinstanceid;
+		Integer nextheuristiclabel = null;
+		String desiredfilename;
+ 		
+		try
+		{
+			//We're creating these features for each relation type.
+			for(Integer relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
+			{
+				//Construct a PrintWriter that prints to the file for features of this type for this relation type.
+				PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(featuretype);
+			
+				//We enforce a certain order on our instances because for sort of complicated reasons, this means we do not have
+				//to hold as many things in memory.  So FindAndOrderAllInstances wrote a file listing all the instances we
+				//are interested in using, and we have to process the instances in the order provided by the file.  So read
+				//the file it wrote to process the instances in it one-by-one.
+				File g = ProducedFileGetter.getRelationshipSVMInstancesOrderFile(entityextractedfilename, relationtype, training);
+				BufferedReader orderedinstancereader = new BufferedReader(new FileReader(g));
+				String nextorderedinstanceline = orderedinstancereader.readLine();
+				if(nextorderedinstanceline == null)
+					nextinstanceid = null;
+				else
+				{
+					String[] orderedinstancesplitline = nextorderedinstanceline.split(" ");
+					nextinstanceid = new InstanceID(orderedinstancesplitline[2]);
+					nextheuristiclabel = Integer.parseInt(orderedinstancesplitline[0]);
+				}
+			
+				//While there are still more instances in the file we're reading:
+				while(nextinstanceid != null)
+				{
+					//There are likely to be many instances associated with each entity-annotated (.ser.gz) file.  Reading 
+					//these files is an expensive operation, so we only want to read each file once.  So read file associated'
+					//with nextinstanceid in only if we did not already read it in.
+					desiredfilename = nextinstanceid.getFileName();
+					if(!desiredfilename.equals(currentfilename))
+					{
+						File f = new File(ProducedFileGetter.getEntityExtractedSerializedDirectory(training), desiredfilename);
+						Annotation deserDoc = EntityLabeler.deserializeAnnotatedDoc(f.getAbsolutePath());
+						
+						//These are the annotated sentences from the entity-annotated file.  They have annotations like POS
+						//tags and lemmas, and parse trees, and hopefully in the next version of the VM, coreference and 
+						//dependency trees.
+						sentences = deserDoc.get(SentencesAnnotation.class);
+						
+						currentfilename = desiredfilename;
+					}
+					
+					
+					//Get a string representation of the parse tree path between entities represented by nextinstanceid.
+					String nodepath = getDependencyParseTreePath(FeatureMap.DEPENDENCYPARSETREENODEPATH, nextinstanceid, sentences);
+					String[] lemmas = {};
+					if(!nodepath.equals(emptystringcode))
+						lemmas = nodepath.split("-");
+					
+					ArrayList<String> context = new ArrayList<String>();
+					for(String lemma : lemmas)
+						context.add(lemma);
+					
+					
+					//Now, actually build the SVM_light style string representation of the instance.
+					String instanceline = buildOutputLineFromVector(nextheuristiclabel, wvm.getContextVector(context), context.size());
+			
+					
+					//Write this instance as a relation instance line consisting of only one feature (the parse tree path)
+					//including the heuristic label and comment extracted from the file written by FindAndOrderAllInstances.
+					String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+					out.println(instanceline + comment);
+				
+				
+					//Read in the next instance from FindAndOrderAllInstances's file.
+					nextorderedinstanceline = orderedinstancereader.readLine();
+					if(nextorderedinstanceline == null)
+						nextinstanceid = null;
+					else
+					{
+						String[] orderedinstancesplitline = nextorderedinstanceline.split(" ");
+						nextinstanceid = new InstanceID(orderedinstancesplitline[2]);
+						nextheuristiclabel = Integer.parseInt(orderedinstancesplitline[0]);
+					}
+				}
+				
+				out.close();
+				orderedinstancereader.close();
+			}
+		}catch(IOException e)
+		{
+			System.out.println(e);
+			e.printStackTrace();
+			System.exit(3);
+		}
+ 	}	
 	
+ 	
+ 	private static String getSubPathFeaturesLine(String parsetreepath)
+ 	{
+ 		HashSet<String> features = new HashSet<String>();
+ 		
+ 		String[] splitpath = parsetreepath.split("-");
+ 		for(int i = 0; i < splitpath.length; i++)
+ 		{
+ 			for(int j = i+1; j <= splitpath.length && j <= i+5; j++)
+ 			{
+ 				String feature = "";
+ 				for(int k = i; k < j; k++)
+ 					feature += " " + splitpath[k];
+ 				feature = feature.trim().replaceAll(" ", "-");
+ 				
+ 				features.add(feature);
+ 			}
+ 		}
+ 		
+ 		ArrayList<String> sortedfeatures = new ArrayList<String>(features);
+ 		Collections.sort(sortedfeatures);
+ 		String result = "";
+ 		for(String feature : sortedfeatures)
+ 			result += " " + feature + ":1";
+ 		
+ 		return result.trim();
+ 	}
 }
