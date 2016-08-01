@@ -30,6 +30,10 @@ public class FeatureMap extends HashMap<String,Integer>
 	public static final String DEPENDENCYPARSETREENODESUBPATHS = "k";	
 	public static final String DEPENDENCYPARSETREEEDGENODESUBPATHS = "l";	
 	
+	public static final String ENTITYBEFORECOUNTS = "m";
+	public static final String ENTITYBETWEENCOUNTS = "n";
+	public static final String ENTITYAFTERCOUNTS = "o";
+	
 	
 	
 	public static final String ALWAYSPREDICTPOSITIVECODE = "z";	//Warning.  This is not a code that ever gets used in a command line arguments.  It is merely used internally to determine which file to write positive prediction results to.
