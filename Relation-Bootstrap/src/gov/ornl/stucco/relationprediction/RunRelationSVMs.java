@@ -384,7 +384,10 @@ public class RunRelationSVMs
 		String predictionline = testpredictionsin.readLine();
 		while(dataline != null)
 		{
-			String truelabel = dataline.substring(0, dataline.indexOf(' '));
+			int endlabelindex = dataline.indexOf(' ');
+			if(endlabelindex < 0)
+				endlabelindex = dataline.length();
+			String truelabel = dataline.substring(0, endlabelindex);
 			//String instanceid = dataline.split("#")[1];
 			
 			long predictedlabel = Math.round(Double.parseDouble(predictionline));
