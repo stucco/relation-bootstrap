@@ -76,7 +76,7 @@ Note that this is a very time-expensive program to run.  It may take a week to c
 
 #### Run this program:
 	
-	java gov.ornl.stucco.relationprediction/FindAndOrderAllInstances preprocessedtype training
+	java -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar:./dependency/*" gov.ornl.stucco.relationprediction/FindAndOrderAllInstances preprocessedtype training
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 
@@ -103,7 +103,7 @@ This program takes the output of the previous three programs to write a lot of d
 
 #### Run this program:
 
-	java gov.ornl.stucco.relationprediction/RunRelationSVMs preprocessedtype featuretypecodes
+	java -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar" gov.ornl.stucco.relationprediction/RunRelationSVMs preprocessedtype featuretypecodes
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	featuretypecodes = a list of unseparated feature type codes from FeatureMap.java.

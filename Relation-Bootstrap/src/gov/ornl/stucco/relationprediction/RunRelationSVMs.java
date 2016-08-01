@@ -331,8 +331,10 @@ public class RunRelationSVMs
 	//Returns 0 if the instance is in one of the training folds, 1 if it is in excludedfold1, or 2 if it is in excludedfold2.  Returns 3 in the special case where both excluded folds are null (the case where we want to train and test on all available instances).
 	public static int isInWhichFold(String instanceline, Integer excludedfold1, Integer excludedfold2)
 	{
-		String[] splitline = instanceline.split("#");
-		String linecomment = splitline[1];
+		//String[] splitline = instanceline.split("#");
+		int commentstart = instanceline.indexOf("#");
+		//String linecomment = splitline[1];
+		String linecomment = instanceline.substring(commentstart+1);
 		//String sentencenumstring = linecomment.substring(1, linecomment.indexOf(' ', 1));
 		String instanceidstring = linecomment.trim().split(" ")[0];
 		InstanceID iid = new InstanceID(instanceidstring);
