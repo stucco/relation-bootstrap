@@ -9,7 +9,7 @@ import java.io.*;
 public class FeatureMap extends HashMap<String,Integer>
 {
 	//Warning: word embeddings only generate valid features for instances where both entities occur in the same sentence.
-	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity.	
+	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity as encoded via averaging the words' word2vec vectors.
 	public static final String WORDEMBEDDINGBETWEENCONTEXT = "b";	//Context between entities.
 	public static final String WORDEMBEDDINGAFTERCONTEXT = "c";	//Context after second entity.
 	
@@ -17,7 +17,7 @@ public class FeatureMap extends HashMap<String,Integer>
 	
 	public static final String DEPENDENCYPARSETREEEDGEPATH = "e";	//String of dependency tree edge labels between entities.  Entities are represented by their last word.
 	public static final String DEPENDENCYPARSETREENODEPATH = "f";	//String of dependency tree node lemmas between entities.  Entities are represented by their last word.
-	public static final String DEPENDENCYPARSETREEEDGENODEPATH = "g";	//String of dependency tree edge labels and node lemmas between entities.  Entities are represented by their last word.
+	public static final String DEPENDENCYPARSETREEEDGENODEPATH = "g";	//String of dependency tree edge labels and node lemmas between entities.  The string alternates between edges (grammatical relationships) and nodes (word lemmas).  Entities are represented by their last word.
 	
 	public static final String DEPENDENCYPARSETREENODECONTEXTS = "h";	//Collect the node lemmas in the dependency path between the cyber entities, then make an embedding feature from them just as with the context features.
 	
@@ -30,9 +30,17 @@ public class FeatureMap extends HashMap<String,Integer>
 	public static final String DEPENDENCYPARSETREENODESUBPATHS = "k";	
 	public static final String DEPENDENCYPARSETREEEDGENODESUBPATHS = "l";	
 	
+	//Counts of entities of all types appearing in different parts of the text.  There is a separate count feature for each entity type.
+	//Note that the entities participating in the candidate relationship are not included in any of these.
 	public static final String ENTITYBEFORECOUNTS = "m";
 	public static final String ENTITYBETWEENCOUNTS = "n";
 	public static final String ENTITYAFTERCOUNTS = "o";
+	
+	//(lemmatized) word n-grams of length 1, 2, and 3 appearing before, between, and after the entities.  These are binary features rather than counts.  These are intended as baseline features.
+	public static final String WORDNGRAMSBEFORE = "p";
+	public static final String WORDNGRAMSBETWEEN = "q";
+	public static final String WORDNGRAMSAFTER = "r";
+	
 	
 	
 	

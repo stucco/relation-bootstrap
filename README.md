@@ -120,7 +120,7 @@ Note that this is a very time-expensive program to run.  It may take a week to c
 
 #### Run this program:
 
-	java gov.ornl.stucco.relationprediction/CalculateResults preprocessedtype featuretypecodes
+	java -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar:./dependency/*" gov.ornl.stucco.relationprediction/CalculateResults preprocessedtype featuretypecodes
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	featuretypecodes = a list of unseparated feature type codes from FeatureMap.java.

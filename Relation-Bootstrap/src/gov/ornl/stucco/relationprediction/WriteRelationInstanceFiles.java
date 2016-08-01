@@ -154,6 +154,12 @@ public class WriteRelationInstanceFiles
 			writeEntityContextFile(featuretype, relationtypeTofeaturetypeToprintwriter);
 		if(featuretype.equals(FeatureMap.ENTITYAFTERCOUNTS))
 			writeEntityContextFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.WORDNGRAMSBEFORE))
+			writeWordNgramFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.WORDNGRAMSBETWEEN))
+			writeWordNgramFile(featuretype, relationtypeTofeaturetypeToprintwriter);
+		if(featuretype.equals(FeatureMap.WORDNGRAMSAFTER))
+			writeWordNgramFile(featuretype, relationtypeTofeaturetypeToprintwriter);
 	}
 	
 	private static void writeContextFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
@@ -947,6 +953,160 @@ public class WriteRelationInstanceFiles
 						Collections.sort(sortedentities);
 						for(String entitystring : sortedentities)
 							instanceline += " " + entitystring + ":" + entitytypecounts.get(entitystring);
+					
+						//Now, actually build the SVM_light style string representation of the instance.
+						//String instanceline = buildOutputLineFromVector(nextheuristiclabel, wvm.getContextVector(context), context.size());
+				
+						//Add a comment describing what the instance is about (originally written in FindAndOrderAllInstances.
+						String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+						instanceline += " " + comment;
+				
+						//And finally, print it to the appropriate file using the PrintWriter we 
+						//made earlier.
+						out.println(instanceline);
+					//}
+						
+
+						nextorderedinstanceline = orderedinstancereader.readLine();
+						if(nextorderedinstanceline == null)
+							nextinstanceid = null;
+						else
+						{
+							String[] orderedinstancesplitline = nextorderedinstanceline.split(" ");
+							nextinstanceid = new InstanceID(orderedinstancesplitline[2]);
+							nextheuristiclabel = Integer.parseInt(orderedinstancesplitline[0]);
+						}
+					}
+				}
+				orderedinstancereader.close();
+			}
+		}catch(IOException e)
+		{
+			System.out.println(e);
+			e.printStackTrace();
+			System.exit(3);
+		}
+	}
+
+	
+	private static void writeWordNgramFile(String featuretype, HashMap<Integer,HashMap<String,PrintWriter>> relationtypeTocontextToprintwriter)
+	{
+		try
+		{
+			//We are switching to using zip files for these because they could potentially be very big.
+			ZipFile zipfile = new ZipFile(ProducedFileGetter.getEntityExtractedText(entityextractedfilename, training));
+			ZipEntry entry = zipfile.entries().nextElement();
+			BufferedReader in = new BufferedReader(new InputStreamReader(zipfile.getInputStream(entry)));
+
+			//We are switching to using zip files for these because they could potentially be very big.
+			ZipFile zipfile3 = new ZipFile(ProducedFileGetter.getEntityExtractedText("unlemmatized", training));
+			ZipEntry entry3 = zipfile3.entries().nextElement();
+			BufferedReader unlemmatizedalignedin = new BufferedReader(new InputStreamReader(zipfile3.getInputStream(entry3)));
+			
+
+			InstanceID nextinstanceid;
+			Integer nextheuristiclabel = null;
+			
+			for(Integer relationtype : GenericCyberEntityTextRelationship.getAllRelationshipTypesSet())
+			{
+				PrintWriter out = relationtypeTocontextToprintwriter.get(relationtype).get(featuretype);
+			
+				
+				File f = ProducedFileGetter.getRelationshipSVMInstancesOrderFile(entityextractedfilename, relationtype, training);
+				BufferedReader orderedinstancereader = new BufferedReader(new FileReader(f));
+				String nextorderedinstanceline = orderedinstancereader.readLine();
+				if(nextorderedinstanceline == null)
+					nextinstanceid = null;
+				else
+				{
+					String[] orderedinstancesplitline = nextorderedinstanceline.split(" ");
+					nextinstanceid = new InstanceID(orderedinstancesplitline[2]);
+					nextheuristiclabel = Integer.parseInt(orderedinstancesplitline[0]);
+				}
+				
+				
+				while(nextinstanceid != null)
+				{
+				//ArrayList<InstanceID> instanceidorder = new ArrayList<InstanceID>(relationtypeToinstanceidorder.get(relationtype));
+				//while(instanceidorder.size() > 0)
+				//{
+					String desiredfilename = nextinstanceid.getFileName();
+				
+					ArrayList<String[]> filelines = getLinesAssociatedWithOneFile(desiredfilename, in, zipfile, entry);
+					ArrayList<String[]> unlemmatizedfilelines = getLinesAssociatedWithOneFile(desiredfilename, unlemmatizedalignedin, zipfile3, entry3);
+				
+					//These are the indices of the tokens in the original document (before we 
+					//replaced entities with representative tokens).
+					ArrayList<int[]> originalindices = new ArrayList<int[]>();
+					for(String[] sentence : unlemmatizedfilelines)
+						originalindices.add(PrintPreprocessedDocuments.getOriginalTokenIndexesFromPreprocessedLine(sentence));
+				
+					//Figure out which features should go with this instance.
+					//while(instanceidorder.size() > 0 && instanceidorder.get(0).getFileName().equals(desiredfilename))
+					while(nextinstanceid != null && nextinstanceid.getFileName().equals(desiredfilename))
+					{
+						int firsttokensentencenum = nextinstanceid.getFirstTokenSentenceNum();
+						int replacedfirsttokenindex = nextinstanceid.getReplacedFirstTokenIndex();
+						int secondtokensentencenum = nextinstanceid.getSecondTokenSentenceNum();
+						int replacedsecondtokenindex = nextinstanceid.getReplacedSecondTokenIndex();
+					
+						String[] firstsentence = filelines.get(firsttokensentencenum);
+						String[] secondsentence = filelines.get(secondtokensentencenum);
+					
+						//Figure out which words appear in the context we are interested in.
+						ArrayList<String> context = new ArrayList<String>();
+						if(featuretype.equals(FeatureMap.WORDNGRAMSBEFORE))
+						{
+							for(int i = 0; i < replacedfirsttokenindex; i++)
+								context.add(firstsentence[i]);
+						}
+						if(featuretype.equals(FeatureMap.WORDNGRAMSAFTER))
+						{
+							for(int i = replacedsecondtokenindex+1; i < secondsentence.length; i++)
+								context.add(secondsentence[i]);
+						}
+						if(featuretype.equals(FeatureMap.WORDNGRAMSBETWEEN))
+						{
+							if(firsttokensentencenum == secondtokensentencenum)
+							{
+								for(int i = replacedfirsttokenindex+1; i < replacedsecondtokenindex; i++)
+									context.add(firstsentence[i]);
+							}
+							else
+							{
+								for(int i = replacedfirsttokenindex+1; i < firstsentence.length; i++)
+									context.add(firstsentence[i]);
+								for(int i = 0; i < replacedsecondtokenindex; i++)
+									context.add(secondsentence[i]);
+								for(int sentencenum = firsttokensentencenum + 1; sentencenum < secondtokensentencenum; sentencenum++)
+								{
+									String[] sentence = filelines.get(sentencenum);
+									for(String word : sentence)
+										context.add(word);
+								}
+							}
+						}
+						
+						
+						HashSet<String> featurenames = new HashSet<String>();
+						for(int n = 1; n <= 3; n++)
+						{
+							for(int i = 0; i < context.size(); i++)
+							{
+								String featurename = "";
+								for(int j = i; j < i + n && j < context.size(); j++)
+									featurename += " " + context.get(i).replaceAll("-", "+");
+								featurename = featurename.replaceAll("-", "+").trim().replaceAll(" ", "-");
+								featurenames.add(featurename);
+							}
+						}
+						ArrayList<String> sortedfeaturenames = new ArrayList<String>(featurenames);
+						Collections.sort(sortedfeaturenames);
+						
+						
+						String instanceline = nextheuristiclabel + "";
+						for(String featurename : sortedfeaturenames)
+							instanceline += " " + featurename+ ":1";
 					
 						//Now, actually build the SVM_light style string representation of the instance.
 						//String instanceline = buildOutputLineFromVector(nextheuristiclabel, wvm.getContextVector(context), context.size());
