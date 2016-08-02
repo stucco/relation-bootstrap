@@ -333,10 +333,13 @@ public class RunRelationSVMs
 	public static int isInWhichFold(String instanceline, Integer excludedfold1, Integer excludedfold2)
 	{
 		//String[] splitline = instanceline.split("#");
-		int commentstart = instanceline.indexOf("#");
+		//int commentstart = instanceline.indexOf("#");
+		String[] instanceAndcomments = WriteRelationInstanceFiles.getInstanceAndComments(instanceline);
 		//String linecomment = splitline[1];
-		String linecomment = instanceline.substring(commentstart+1);
+		//String linecomment = instanceline.substring(commentstart+1);
+		String linecomment = instanceAndcomments[1];
 		//String sentencenumstring = linecomment.substring(1, linecomment.indexOf(' ', 1));
+		
 		String instanceidstring = linecomment.trim().split(" ")[0];
 		InstanceID iid = new InstanceID(instanceidstring);
 		int sentencenum = iid.getFirstTokenSentenceNum();
