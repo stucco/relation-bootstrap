@@ -253,7 +253,8 @@ public class RunRelationSVMs
 						break outerloop;
 					whichfold = isInWhichFold(line, excludedfold1, excludedfold2);
 					
-					String[] instanceAndcomments = line.split("#");
+					//String[] instanceAndcomments = line.split(" # ");
+					String[] instanceAndcomments = WriteRelationInstanceFiles.getInstanceAndComments(line);
 					
 					if(comment != null && !comment.equals(instanceAndcomments[1]))
 					{

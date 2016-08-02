@@ -43,6 +43,9 @@ public class InstanceID
 	
 	InstanceID(String instanceidasstring)
 	{
+		System.out.println(instanceidasstring.lastIndexOf('-') + "\t" + instanceidasstring);
+		
+		
 		filename = instanceidasstring.substring(0, instanceidasstring.lastIndexOf('-'));
 		
 		String indices = instanceidasstring.substring(instanceidasstring.lastIndexOf('-')+1);

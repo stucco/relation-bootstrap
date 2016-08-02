@@ -242,5 +242,11 @@ public class FindAndOrderAllInstances
 		
 		return relationtypeToprintwriter;
 	}
+	
+	
+	public static String getCommentFromLine(String line)
+	{
+		return line.split(" # ")[1];
+	}
 
 }

@@ -148,8 +148,11 @@ public class PredictUsingExistingSVMModel
 						break outerloop;
 					
 					//String[] instanceAndcomments = line.split("#");
-					String instance = line.substring(0, line.indexOf('#'));
-					comment = line.substring(line.indexOf('#')+1);
+					//String instance = line.substring(0, line.indexOf('#'));
+					//comment = line.substring(line.indexOf('#')+1);
+					String[] instanceAndcomments = WriteRelationInstanceFiles.getInstanceAndComments(line);
+					String instance = instanceAndcomments[0];
+					comment = instanceAndcomments[1];
 					
 					//comment = instanceAndcomments[1];
 					

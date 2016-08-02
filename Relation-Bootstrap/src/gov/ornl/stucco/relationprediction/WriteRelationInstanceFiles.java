@@ -265,8 +265,10 @@ public class WriteRelationInstanceFiles
 						String instanceline = buildOutputLineFromVector(nextheuristiclabel, wvm.getContextVector(context), context.size());
 				
 						//Add a comment describing what the instance is about (originally written in FindAndOrderAllInstances.
-						String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
-						instanceline += " " + comment;
+						//String comment = nextorderedinstanceline.split(" # ")[1];
+						//String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+						String comment = FindAndOrderAllInstances.getCommentFromLine(nextorderedinstanceline);
+						instanceline += " # " + comment;
 				
 						//And finally, print it to the appropriate file using the PrintWriter we 
 						//made earlier.
@@ -464,17 +466,18 @@ public class WriteRelationInstanceFiles
 				
 					//Write this instance as a relation instance line consisting of only one feature (the parse tree path)
 					//including the heuristic label and comment extracted from the file written by FindAndOrderAllInstances.
-					String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+					//String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+					String comment = FindAndOrderAllInstances.getCommentFromLine(nextorderedinstanceline);
 					if(featuretype.equals(FeatureMap.SYNTACTICPARSETREEPATH) || 
 							featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGEPATH) || 
 							featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODEPATH) || 
 							featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODEPATH))
-						out.println(nextheuristiclabel + " " + parsetreepath + ":1" + " " + comment);
+						out.println(nextheuristiclabel + " " + parsetreepath + ":1" + " # " + comment);
 					else if(featuretype.equals(FeatureMap.SYNTACTICPARSETREESUBPATHS) || 
 							featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGESUBPATHS) || 
 							featuretype.equals(FeatureMap.DEPENDENCYPARSETREENODESUBPATHS) || 
 							featuretype.equals(FeatureMap.DEPENDENCYPARSETREEEDGENODESUBPATHS))
-						out.println(nextheuristiclabel + " " + getSubPathFeaturesLine(parsetreepath) + " " + comment);
+						out.println(nextheuristiclabel + " " + getSubPathFeaturesLine(parsetreepath) + " # " + comment);
 				
 				
 					//Read in the next instance from FindAndOrderAllInstances's file.
@@ -777,8 +780,9 @@ public class WriteRelationInstanceFiles
 					
 					//Write this instance as a relation instance line consisting of only one feature (the parse tree path)
 					//including the heuristic label and comment extracted from the file written by FindAndOrderAllInstances.
-					String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
-					out.println(instanceline + comment);
+					//String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+					String comment = FindAndOrderAllInstances.getCommentFromLine(nextorderedinstanceline);
+					out.println(instanceline + " # " + comment);
 				
 				
 					//Read in the next instance from FindAndOrderAllInstances's file.
@@ -958,8 +962,9 @@ public class WriteRelationInstanceFiles
 						//String instanceline = buildOutputLineFromVector(nextheuristiclabel, wvm.getContextVector(context), context.size());
 				
 						//Add a comment describing what the instance is about (originally written in FindAndOrderAllInstances.
-						String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
-						instanceline += " " + comment;
+						//String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+						String comment = FindAndOrderAllInstances.getCommentFromLine(nextorderedinstanceline);
+						instanceline += " # " + comment;
 				
 						//And finally, print it to the appropriate file using the PrintWriter we 
 						//made earlier.
@@ -1095,7 +1100,7 @@ public class WriteRelationInstanceFiles
 							{
 								String featurename = "";
 								for(int j = i; j < i + n && j < context.size(); j++)
-									featurename += " " + context.get(i).replaceAll("-", "+");
+									featurename += " " + context.get(j).replaceAll("-", "+");
 								featurename = featurename.replaceAll("-", "+").trim().replaceAll(" ", "-");
 								featurenames.add(featurename);
 							}
@@ -1112,8 +1117,9 @@ public class WriteRelationInstanceFiles
 						//String instanceline = buildOutputLineFromVector(nextheuristiclabel, wvm.getContextVector(context), context.size());
 				
 						//Add a comment describing what the instance is about (originally written in FindAndOrderAllInstances.
-						String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
-						instanceline += " " + comment;
+						//String comment = nextorderedinstanceline.substring(nextorderedinstanceline.indexOf('#'));
+						String comment = FindAndOrderAllInstances.getCommentFromLine(nextorderedinstanceline);
+						instanceline += " # " + comment;
 				
 						//And finally, print it to the appropriate file using the PrintWriter we 
 						//made earlier.
@@ -1142,4 +1148,11 @@ public class WriteRelationInstanceFiles
 		}
 	}
 
+	
+	public static String[] getInstanceAndComments(String line)
+	{
+		return line.split(" # ");
+	}
+	
+	
 }
