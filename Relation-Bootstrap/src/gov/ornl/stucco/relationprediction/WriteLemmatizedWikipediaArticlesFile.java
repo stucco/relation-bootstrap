@@ -32,13 +32,16 @@ import edu.stanford.nlp.util.CoreMap;
 public class WriteLemmatizedWikipediaArticlesFile 
 {
 	//Directory on processing virtual machine containing wikipedia articles that have been extracted using Wikipedia Extractor (https://github.com/bwbaugh/wikipedia-extractor)
-	private static File wikiarticlesdirectory = new File("/data/p5r/extracted/AA");
+	//Changed this file from a global constant to a command line argument.  So now the directory containing the wikipedia articles should be the first command line argument.
+	//private static File wikiarticlesdirectory = new File("/data/p5r/extracted/AA");
 
 	private static long articlesperfile = 100000;
 	
 	
 	public static void main(String[] args) throws IOException
 	{	
+		File wikiarticlesdirectory = new File(args[0]);
+		
 		//Properties for the automatic annotation process.
 		Properties props = new Properties();
 		//props.setProperty("ssplit.eolonly", "true");

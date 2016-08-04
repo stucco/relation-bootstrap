@@ -17,8 +17,8 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 
 
 #Some parameters.  I set them to what I thought were reasonable defaults, or values we discussed.
-hiddenlayersize = 100
-windowsize = 5 #maximum distance between words looked at during training.
+hiddenlayersize = 100   #Hidden layer size is 100 because Google trained their model using 300 hidden layer nodes, but they were using a larger corpus
+windowsize = 5 #maximum distance between words looked at during training (for skip grams).
 skipgramorbow = 1 #1 for skip gram.  0 for continuous bag of words.
 wordoccurrencethreshold = 100 #If a word occurs at least this number of times in our dataset, include it in our vocabulary.
 repeatrelevantdocumenttimes = 50 #We want our relevant documents to have more of an impact on the model than the wikipedia articles, so feed them into the training process multiple times.  If this number is smaller than wordoccurrencethreshold, some vocabulary may be left out.  
