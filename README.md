@@ -62,21 +62,30 @@ This program takes the output produced by the entity-extractor in the form of se
 The following steps between these lines is optional depending on whether you also want to train a new word2vec model.  If you do not, and there is already a file in *relation-bootstrap/ProducedFiles/Models/* for the preprocessedtype you plan to use for training, you can skip the following few steps for producing a word2vec model:
 
 
-####Select a directory where you have lots of space (~20GB).  We will refer to this directory as "the directory"
+#### Select a directory where you have lots of space (~20GB).  We will refer to this directory as "the directory"
 
-####Download the WikiExtractor.py program from http://medialab.di.unipi.it/wiki/Wikipedia_Extractor into the directory.
 
-####Download an English Wikipedia dump into the directory.  The one we originally used can be found at https://dumps.wikimedia.org/enwiki/20160601/ in the enwiki-20160601-pages-articles-multistream.xml.bz2 file.
+#### Download an English Wikipedia dump into the directory.  The one we originally used can be found at https://dumps.wikimedia.org/enwiki/20160601/ in the enwiki-20160601-pages-articles-multistream.xml.bz2 file.
 
-####Extract the file's contents with a command like:
+
+#### Extract the file's contents with a command like:
 	
 	bzip2 -d enwiki-20160601-pages-articles-multistream.xml.bz2
 
-####Extract the article text from the XML files using a command like:
+
+#### Download the WikiExtractor.py program from http://medialab.di.unipi.it/wiki/Wikipedia_Extractor into the directory.
+
+
+#### Extract the article text from the XML files using a command like:
 
 	python WikiExtractor.py -b 1000M -o extracted enwiki-20160601-pages-articles-multistream.xml
 
 
+#### Navigate to relation-bootstrap/Relation-Bootstap/target and run this program:
+
+	java -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar:./dependency/*" gov.ornl.stucco.relationprediction/WriteLemmatizedWikipediaArticlesFile directory/extracted/AA/
+
+The one command line argument here should be the directory where you put the text files in the previous command.  If you ran the previous command with the "-o extracted" option just as given, directory/extracted/AA should be the location of these text files.
 
 
 
