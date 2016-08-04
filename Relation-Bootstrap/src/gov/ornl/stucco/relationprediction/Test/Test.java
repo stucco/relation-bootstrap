@@ -32,6 +32,7 @@ import gov.ornl.stucco.relationprediction.CyberEntityText;
 import gov.ornl.stucco.relationprediction.GenericCyberEntityTextRelationship;
 import gov.ornl.stucco.relationprediction.ObjectRank;
 import gov.ornl.stucco.relationprediction.ProducedFileGetter;
+import gov.ornl.stucco.relationprediction.Vulnerability;
 import gov.ornl.stucco.relationprediction.WordToVectorMap;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberConfidenceAnnotation;
@@ -48,7 +49,9 @@ public class Test
 	
 	public static void main(String[] args) throws Exception
 	{
-		writeSerGzToText();
+		printVulnerabilityNames();
+		
+		//writeSerGzToText();
 		
 		//findExamples();
 		
@@ -434,7 +437,7 @@ public class Test
 			int unknowncount = 0;
 			
 			
-			File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile("aliasreplaced", "111", positiverelationtype, false);
+			File relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile("aliasreplaced", "a", positiverelationtype, false);
 			
 			BufferedReader in = new BufferedReader(new FileReader(relationinstancesfile));
 			String line;
@@ -455,7 +458,7 @@ public class Test
 			in.close();
 			
 			
-			relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile("aliasreplaced", "111", -positiverelationtype, false);
+			relationinstancesfile = ProducedFileGetter.getRelationshipSVMInstancesFile("aliasreplaced", "a", -positiverelationtype, false);
 			
 			in = new BufferedReader(new FileReader(relationinstancesfile));
 			while((line = in.readLine()) != null)
@@ -568,6 +571,14 @@ public class Test
 			}
 			
 		return result;
+	}
+	
+	private static void printVulnerabilityNames()
+	{
+		GenericCyberEntityTextRelationship.loadAllKnownRelationships();
+		
+		for(String name : Vulnerability.getAllNames())
+			System.out.println(name);
 	}
 	
 }

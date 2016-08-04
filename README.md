@@ -34,7 +34,9 @@ In order to build the project and save the dependencies in a convenient location
 
 # Instructions for training a relation classifier:
 
+(These steps are illustrated in TrainingDiagram.png and DiagramsKey)
 
+---
 
 <br>
 
@@ -127,6 +129,8 @@ Note that this is a very time-expensive program to run.  It may take a week to c
 
 This program does a grid search over the predictions made by the previous program in order to select the best parameter set via 4-fold cross-validation on the training set.  It then calculates results on the test set.  It performs these steps 5 times, once for each test fold.  It then micro averages and prints the results (f-score, precision, and recall) across all 5 test folds.  It additionally prints the set of these parameters that performed best across the 5 folds.  
 
+In addition to printing these results to the screen, it saves them in a file located in the ".../relation-bootstrap/ProducedFiles/Training/ExperimentalResultsFiles" directory (which can be obtained programmatically via the method ProducedFileGetter.getResultsFile).  The parameters that get saved in this file are used when making predictions for new documents (described below).
+
 
 ---
 
@@ -138,6 +142,10 @@ This program does a grid search over the predictions made by the previous progra
 
 #Instructions for classifying relationship candidates appearing in a set of entity-extracted documents (ser.gz files)
 
+(These steps are illustrated in PredictingNewDataDiagram.png and DiagramsKey)
+
+
+---
 
 <br>
 
@@ -160,7 +168,7 @@ This program takes the output produced by the entity-extractor in the form of se
 
 #### Run this program:
 	
-	java gov.ornl.stucco.relationprediction/FindAndOrderAllInstances preprocessedtype
+	java -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar:./dependency/*" gov.ornl.stucco.relationprediction/FindAndOrderAllInstances preprocessedtype
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 
@@ -173,7 +181,7 @@ This program takes the output of the previous two programs to write a file that 
 
 #### Run this program:
 
-	java  -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar:./dependency/*" gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode
+	java -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar:./dependency/*" gov.ornl.stucco.relationprediction/WriteRelationInstanceFiles preprocessedtype featuretypecode
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	featuretypecode = Any implemented feature type code listed in FeatureMap.java.
@@ -187,7 +195,7 @@ This program takes the output of the previous programs to write a lot of data fi
 
 #### Run this program:
 
-	java gov.ornl.stucco.relationprediction/PredictUsingExistingSVMModel preprocessedtype featuretypecodes
+	java -cp "./Relation-Bootstrap-0.0.1-SNAPSHOT.jar" gov.ornl.stucco.relationprediction/PredictUsingExistingSVMModel preprocessedtype featuretypecodes
 
 	preprocessedtype = original | entityreplaced | aliasreplaced
 	featuretypecodes = a list of unseparated feature type codes from FeatureMap.java.
@@ -219,6 +227,14 @@ Finally, SourceText is the original text from which the relationship candidate w
 Add "allpositive" (without quotes) to the list of command line parameters if you instead want to look at baseline results wherein the positive class is predicted for every instance.  
 
 
+---
 
+<br>
+<br>
+<br>
+
+# Miscellaneous Notes:
+
+There are instructions on how to get around one of the collector issues in the collectorfiles directory.
 
 
