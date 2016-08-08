@@ -52,6 +52,10 @@ public class WriteYmlFileFromSources
 			
 				writeSources(out, entry, workingtypecounter);
 				writeSources(totalout, entry, 40);
+				
+				
+				System.out.println(entry.getName());
+				
 			
 				printYmlFileEnding(out);
 		

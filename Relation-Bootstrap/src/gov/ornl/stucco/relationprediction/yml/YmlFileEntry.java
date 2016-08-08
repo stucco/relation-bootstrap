@@ -54,6 +54,11 @@ public class YmlFileEntry
 	}
 	
 	
+	public String getName()
+	{
+		return name;
+	}
+	
 	public boolean isWorkingType()
 	{
 		return category.equals("news") || category.equals("articles") || category.equals("vendor alerts");
