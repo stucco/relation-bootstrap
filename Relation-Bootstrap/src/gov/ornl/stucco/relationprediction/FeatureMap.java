@@ -8,18 +8,18 @@ import java.io.*;
 
 public class FeatureMap extends HashMap<String,Integer>
 {
-	//Warning: word embeddings only generate valid features for instances where both entities occur in the same sentence.
-	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity as encoded via averaging the words' word2vec vectors.
-	public static final String WORDEMBEDDINGBETWEENCONTEXT = "b";	//Context between entities.
-	public static final String WORDEMBEDDINGAFTERCONTEXT = "c";	//Context after second entity.
+	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity as encoded via averaging the words' word2vec vectors.  Also one feature counting the tokens before the first entity.
+	public static final String WORDEMBEDDINGBETWEENCONTEXT = "b";	//Context between entities as encoded via averaging the words' word2vec vectors.  Also one feature counting the tokens between the entities.
+	public static final String WORDEMBEDDINGAFTERCONTEXT = "c";	//Context after second entity as encoded via averaging the words' word2vec vectors.  Also one feature counting the tokens after the last entity.
+	//Note that it probably makes more sense to separate the context lengths into a separate feature type, if you need some busy work.
 	
 	public static final String SYNTACTICPARSETREEPATH = "d";	//String of syntactic parse tree node labels between entities.  Entities are represented by their last word.
 	
-	public static final String DEPENDENCYPARSETREEEDGEPATH = "e";	//String of dependency tree edge labels between entities.  Entities are represented by their last word.
+	public static final String DEPENDENCYPARSETREEEDGEPATH = "e";	//String of dependency tree edge labels between entities.  Directions are included in the label (e.g. an nsubj edge that goes left to right is encoded like >nsubj, while an nsubj edge going the opposite direction is encoded like <nsubj.  Entities are represented by their last word.
 	public static final String DEPENDENCYPARSETREENODEPATH = "f";	//String of dependency tree node lemmas between entities.  Entities are represented by their last word.
-	public static final String DEPENDENCYPARSETREEEDGENODEPATH = "g";	//String of dependency tree edge labels and node lemmas between entities.  The string alternates between edges (grammatical relationships) and nodes (word lemmas).  Entities are represented by their last word.
+	public static final String DEPENDENCYPARSETREEEDGENODEPATH = "g";	//String of directed dependency tree edge labels and node lemmas between entities.  The string alternates between edges (grammatical relationships) and nodes (word lemmas).  Entities are represented by their last word.
 	
-	public static final String DEPENDENCYPARSETREENODECONTEXTS = "h";	//Collect the node lemmas in the dependency path between the cyber entities, then make an embedding feature from them just as with the context features.
+	public static final String DEPENDENCYPARSETREENODECONTEXTS = "h";	//Collect the node lemmas in the dependency path between the cyber entities, then make an embedding feature from them just as with the word embedding context features.
 	
 	
 	//A path is a sequence of items.  To generate these subpath features, we simply take the corresponding path feature from above

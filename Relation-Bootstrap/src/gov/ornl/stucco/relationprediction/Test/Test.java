@@ -7,6 +7,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -17,6 +18,7 @@ import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
 import edu.stanford.nlp.util.CoreMap;
 import gov.ornl.stucco.entity.EntityLabeler;
@@ -49,7 +51,9 @@ public class Test
 	
 	public static void main(String[] args) throws Exception
 	{
-		printVulnerabilityNames();
+		writeLemmatizedExample();
+		
+		//printVulnerabilityNames();
 		
 		//writeSerGzToText();
 		
@@ -581,4 +585,40 @@ public class Test
 			System.out.println(name);
 	}
 	
+	private static void writeLemmatizedExample()
+	{
+		//	String exampleText = "The software developer who inserted a major security flaw into OpenSSL 1.2.4.8, using the file foo/bar/blah.php has said the error was \"quite trivial\" despite the severity of its impact, according to a new report.  The Sydney Morning Herald published an interview today with Robin Seggelmann, who added the flawed code to OpenSSL, the world's most popular library for implementing HTTPS encryption in websites, e-mail servers, and applications. The flaw can expose user passwords and potentially the private key used in a website's cryptographic certificate (whether private keys are at risk is still being determined). This is a new paragraph about Apache Tomcat's latest update 7.0.1.";
+		String exampleText = "I walked its dog.";
+		//	String exampleText = "Oracle DBRM has vulnerability in ABCD plug-in via abcd.1234 (found on abcd.com).";
+
+		
+		Properties props = new Properties();
+	    props.put("annotators", "tokenize, ssplit, pos, lemma");
+	    StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+		
+	    
+	    Annotation document = new Annotation(exampleText);
+
+	    
+	    // run all Annotators on this text
+	    pipeline.annotate(document);
+		
+		
+		
+		List<CoreMap> sentences = document.get(SentencesAnnotation.class);
+	
+		for ( CoreMap sentence : sentences) 
+		{
+			for ( CoreLabel token : sentence.get(TokensAnnotation.class)) 
+			{
+				//System.out.println(token.get(TextAnnotation.class) + "\t" + token.get(CyberAnnotation.class));
+				
+				System.out.print(token.get(LemmaAnnotation.class) + " ");
+			}
+			
+			//System.out.println("Entities:\n" + sentence.get(CyberEntityMentionsAnnotation.class));
+		
+			//System.out.println("Parse Tree:\n" + sentence.get(TreeAnnotation.class));		
+		}
+	}
 }

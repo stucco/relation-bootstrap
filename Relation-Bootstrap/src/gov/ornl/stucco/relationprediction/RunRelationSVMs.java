@@ -330,6 +330,10 @@ public class RunRelationSVMs
 	
 	
 	//Returns 0 if the instance is in one of the training folds, 1 if it is in excludedfold1, or 2 if it is in excludedfold2.  Returns 3 in the special case where both excluded folds are null (the case where we want to train and test on all available instances).
+	//Results previously reported were based on using the sentence number in which the first entity appears to decide
+	//which fold a relation is in.  I have not tested it, but I modified the code to instead make it depend on the 
+	//relationship candidate's string encoding.  This should, hopefully, result in a more equal splitting of candidates
+	//between folds.
 	public static int isInWhichFold(String instanceline, Integer excludedfold1, Integer excludedfold2)
 	{
 		//String[] splitline = instanceline.split("#");
@@ -342,9 +346,12 @@ public class RunRelationSVMs
 		
 		String instanceidstring = linecomment.trim().split(" ")[0];
 		InstanceID iid = new InstanceID(instanceidstring);
-		int sentencenum = iid.getFirstTokenSentenceNum();
 		
-		int modnum = sentencenum % (folds.length - 1);
+		//int sentencenum = iid.getFirstTokenSentenceNum();
+		//int modnum = sentencenum % (folds.length - 1);
+		int holder = iid.toString().hashCode();
+		int modnum = Math.abs(holder) % (folds.length - 1);
+		
 		
 		if(excludedfold1 == null && excludedfold2 == null)
 			return 3;
