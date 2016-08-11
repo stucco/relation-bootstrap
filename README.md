@@ -273,4 +273,6 @@ Add "allpositive" (without quotes) to the list of command line parameters if you
 
 There are instructions on how to get around one of the collector issues in the collectorfiles directory.
 
+There are several diagrams in the main relation-bootstrap directory.  They visually describe the processes outlined above.  DiagramsKey explains what the shapes and colors in them mean.
+
 

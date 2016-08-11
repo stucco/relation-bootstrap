@@ -18,7 +18,7 @@ import java.util.HashMap;
 public class PredictUsingExistingSVMModel
 {
 	//This program is very expensive to run, so if this variable gets turned on, we will run it on only a subset of the available data to save time.  This should be good enough to let us know if the program is working alright.
-	private static boolean testingprogram = true;
+	private static boolean testingprogram = false;
 	
 	
 	private static String pid;	//In the even that we have multiple instances of this program running, we will use each process's pid to ensure that their temporary files do not interfere with eachother.

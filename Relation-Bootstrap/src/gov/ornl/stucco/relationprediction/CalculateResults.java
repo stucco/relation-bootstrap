@@ -15,7 +15,7 @@ import java.util.HashSet;
 public class CalculateResults 
 {
 	//This program is very expensive to run, so if this variable gets turned on, we will run it on only a subset of the available data to save time.  This should be good enough to let us know if the program is working alright.
-	private static boolean testingprogram = true;
+	private static boolean testingprogram = false;
 	
 	
 	private static NumberFormat formatter = new DecimalFormat(".000");

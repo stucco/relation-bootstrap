@@ -8,6 +8,8 @@ import java.io.*;
 
 public class FeatureMap extends HashMap<String,Integer>
 {
+	//In the presentation, abcd was the baseline feature set, and abcdefgmnopqr was the complete feature set.
+	
 	public static final String WORDEMBEDDINGBEFORECONTEXT = "a";	//Context before the first entity as encoded via averaging the words' word2vec vectors.  Also one feature counting the tokens before the first entity.
 	public static final String WORDEMBEDDINGBETWEENCONTEXT = "b";	//Context between entities as encoded via averaging the words' word2vec vectors.  Also one feature counting the tokens between the entities.
 	public static final String WORDEMBEDDINGAFTERCONTEXT = "c";	//Context after second entity as encoded via averaging the words' word2vec vectors.  Also one feature counting the tokens after the last entity.
