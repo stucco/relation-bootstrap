@@ -1,4 +1,12 @@
 package gov.ornl.stucco.relationprediction;
+//This program takes the instance data written by WriteRelationInstanceFiles and applies an SVM model to it that was written 
+//during training. It chooses which parameters to use based on the output of CalculateResults, which gets run during the 
+//training phase. This program will not run properly unless WriteRelationInstanceFiles has been run using the same 
+//preprocessedtype parameter. And of course CalculateResults needs to be run with the same preprocessedtype parameter 
+//during training as well.
+//
+//See the readme file in the github repository for a more complete description.
+
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,7 +19,6 @@ import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-
 
 
 

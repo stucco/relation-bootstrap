@@ -1,4 +1,9 @@
 package gov.ornl.stucco.relationprediction;
+//This program is just my solution to the problem of how to sort objects that are associated with some value, where 
+//the value is not stored in some variable of it.  So I just put the object in the obj variable, the value in the 
+//value variable, and put all of the ObjectRank objects in a sortable collection, then do Collections.sort on it.
+//So it is generally useful for lots of things.
+
 
 public class ObjectRank implements Comparable<ObjectRank>
 {

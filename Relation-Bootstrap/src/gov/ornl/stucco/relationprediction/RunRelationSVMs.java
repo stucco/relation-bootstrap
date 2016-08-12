@@ -1,4 +1,12 @@
 package gov.ornl.stucco.relationprediction;
+//This program takes the instance data written by WriteRelationInstanceFiles, trains a SVM on it, and applies the SVM to 
+//a test set. Also, for each possible combination of parameter settings, it writes an SVM model file to the disk so that 
+//this model can later be used to make predictions. It will not run properly unless WriteRelationInstanceFiles has been 
+//run using the same preprocessedtype parameter. featuretypecodes (a command line parameter) tells the program which 
+//sets of features to use to represent an instance. The codes are each a single character in length, and featuretypecodes 
+//is a lost of these characters without any separator between them.
+
+
 
 import java.io.BufferedReader;
 import java.io.File;

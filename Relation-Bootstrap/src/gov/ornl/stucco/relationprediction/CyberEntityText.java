@@ -1,4 +1,9 @@
 package gov.ornl.stucco.relationprediction;
+//This class stores information about the text of some entity that has been identified.  It stores the text and the predicted
+//entity type.  There are a bunch of static maps here that map things like the entity type constants near the top to
+//string versions of them.  I also manually figured out what order the entity type probabilities are outputted in, so there
+//is a map for converting those indices to one of the entity type integer constants at the top.
+
 
 import java.util.HashMap;
 import java.util.HashSet;

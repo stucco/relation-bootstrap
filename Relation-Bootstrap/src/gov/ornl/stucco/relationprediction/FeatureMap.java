@@ -1,4 +1,20 @@
 package gov.ornl.stucco.relationprediction;
+//This class stores a map of feature names to IDs (hence, why it extends HashMap<String,Integer>).  It allows the construction
+//of such a map through its getIndex(), which returns the ID (Integer) associated with that feature if it is already
+//in the map.  If it is not already in the map, it adds the feature to the map and returns the ID assigned to it.
+//
+//There are a lot of String constants at the top.  Each one is associated with one feature type I have created.  
+//When one of the command line arguments calls for a feature type or a list of feature types, these strings are what
+//should be given to it.  The first step in adding a new feature type is to assign the new feature type a String 
+//constant like those in this class.  The second step is to add an if statement to WriteRelationInstanceFiles to 
+//direct the program’s flow to a new method (which you will create) for writing the instances to a new file alongside your 
+//new feature type.
+//Of course, the details of how to create features of your new type will vary greatly depending on what the feature is 
+//meant to encode.  See WriteRelationInstance.writeParseTreePathFile for an example of a method that writes features using 
+//the .ser.gz (entity-extracted) file associated with each instance, or see WriteRelationInstanceFiles.writeContextFile 
+//for an example of a method that writes features using the preprocessed file written by PrintPreprocessedDocuments.
+
+
 
 import java.util.*;
 

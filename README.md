@@ -257,7 +257,7 @@ ModifiedEntity1Text is the same as OriginalEntity1Text, only in this version, th
 
 OriginalEntity2Text and ModifiedEntity2Text are exactly the same as OriginalEntity1Text and ModifiedEntity1Text except that they refer to the second entity appearing in the text in the relationship rather than to the first.
 
-Finally, SourceText is the original text from which the relationship candidate was extracted, buth with its entities replaced with their OriginalEntityText versions.
+Finally, SourceText is the original text from which the relationship candidate was extracted, but with its entities replaced with their OriginalEntityText versions.
 
 
 Add "allpositive" (without quotes) to the list of command line parameters if you instead want to look at baseline results wherein the positive class is predicted for every instance.  
@@ -274,5 +274,7 @@ Add "allpositive" (without quotes) to the list of command line parameters if you
 There are instructions on how to get around one of the collector issues in the collectorfiles directory.
 
 There are several diagrams in the main relation-bootstrap directory.  They visually describe the processes outlined above.  DiagramsKey explains what the shapes and colors in them mean.
+
+The ProducedFileGetter class has been mentioned a couple times in this document.  It serves as a central place from which all files we produce or use can be obtained.  Look at its methods to see how it finds their locations if you are interested in using one of the intermediately-produced files for something other than the pipeline described above can do.
 
 

@@ -1,4 +1,15 @@
 package gov.ornl.stucco.relationprediction;
+//This program does a grid search over the predictions made by RunRelationSVMs in order to select 
+//the best parameter set via 4-fold cross-validation on the training set.  It then calculates results on the test set.  
+//It performs these steps 5 times, once for each test fold.  It then micro averages and prints the results (f-score, 
+//precision, and recall) across all 5 test folds.  It additionally prints the set of these parameters that performed 
+//best across the 5 folds.  
+
+//In addition to printing these results to the screen, it saves them in a file located in the 
+//".../relation-bootstrap/ProducedFiles/Training/ExperimentalResultsFiles" directory (which can be obtained programmatically 
+//via the method ProducedFileGetter.getResultsFile).  The parameters that get saved in this file are used when making 
+//predictions for new documents with PredictUsingExistingSVMModel.
+
 
 import java.io.BufferedReader;
 import java.io.File;

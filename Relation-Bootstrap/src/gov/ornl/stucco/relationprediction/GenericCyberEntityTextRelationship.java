@@ -1,4 +1,19 @@
 package gov.ornl.stucco.relationprediction;
+//This class is stores generic version of a relationship between two cyber entities.  It can be created between any
+//pair of cyber entities, even those that do not fit into any relationship we care about.  The reason for this is that
+//we use it as a tool for determining if the entities' types fit some relationship we care about.  It can be initialized
+//with two CyberEntityTexts, and from that it will determine which, if any, relationship type could apply between the
+//two entity types.  The constants defined at the top define all relationship types (though if the entities appear
+//in the text in the reverse order of the order implied by the order in the constant's name, the relationship's ID is just
+//-1 times the normal relationship type ID.
+//
+//The most important methods here are loadAllKnownRelationships(), which reads stuff in from a few files, mostly
+//from the NVD dump, and determines what entitities are actually related (just storing this information in memory).
+//After calling that method, it is possible for an instance of this class to call isKnownRelationship() to determine
+//whether the CyberEntityTexts it was initialized with should be related or not according to the NVD dump and other 
+//sources.
+
+
 
 import java.io.File;
 import java.io.FileInputStream;

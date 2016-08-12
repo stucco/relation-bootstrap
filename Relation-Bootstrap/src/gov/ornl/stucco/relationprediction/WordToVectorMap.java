@@ -1,4 +1,7 @@
 package gov.ornl.stucco.relationprediction;
+//This class, when initialized, reads a file written by TrainModel.py listing all words in our vocabulary along with their
+//vector representations.  It just stores the vectors for each string using a HashMap.
+
 
 import java.io.BufferedReader;
 import java.io.File;

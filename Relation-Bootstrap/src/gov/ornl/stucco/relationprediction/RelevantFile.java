@@ -1,4 +1,5 @@
 package gov.ornl.stucco.relationprediction;
+//This class determines (heuristically) whether a token sent to it in the constructor is a file.
 
 import java.util.HashSet;
 
