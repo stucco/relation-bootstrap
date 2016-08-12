@@ -1,3 +1,5 @@
+//Instances of this class store information about a particular software product version.  So it includes the product's
+//name, its vendor, and its version number.
 package gov.ornl.stucco.relationprediction;
 
 import java.util.HashMap;

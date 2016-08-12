@@ -35,6 +35,7 @@ import gov.ornl.stucco.relationprediction.GenericCyberEntityTextRelationship;
 import gov.ornl.stucco.relationprediction.ObjectRank;
 import gov.ornl.stucco.relationprediction.ProducedFileGetter;
 import gov.ornl.stucco.relationprediction.Vulnerability;
+import gov.ornl.stucco.relationprediction.VulnerabilityToSoftwareWVersionRelationship;
 import gov.ornl.stucco.relationprediction.WordToVectorMap;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberAnnotation;
 import gov.ornl.stucco.entity.CyberEntityAnnotator.CyberConfidenceAnnotation;
@@ -51,7 +52,9 @@ public class Test
 	
 	public static void main(String[] args) throws Exception
 	{
-		writeLemmatizedExample();
+		printAllVulnerabilityToSoftwares();
+		
+		//writeLemmatizedExample();
 		
 		//printVulnerabilityNames();
 		
@@ -621,4 +624,10 @@ public class Test
 			//System.out.println("Parse Tree:\n" + sentence.get(TreeAnnotation.class));		
 		}
 	}
+
+	private static void printAllVulnerabilityToSoftwares()
+	{
+		System.out.println(VulnerabilityToSoftwareWVersionRelationship.getPrimaryKeyToRelationship());
+	}
+
 }

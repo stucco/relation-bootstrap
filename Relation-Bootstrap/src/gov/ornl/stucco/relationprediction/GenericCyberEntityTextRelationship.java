@@ -235,15 +235,18 @@ public class GenericCyberEntityTextRelationship
 			        org.w3c.dom.Document document = db.parse(stream);
 			        org.w3c.dom.Element root = document.getDocumentElement();
 			        org.w3c.dom.NodeList nodelist = root.getChildNodes();
-			        for(int i = 0; i < nodelist.getLength(); i++)
+			        for(int i = 0; i < nodelist.getLength(); i++)  //Each node should be associated with a vulnerability.
 			        {
 			        	org.w3c.dom.Node node = nodelist.item(i);
 					
-			        	//Skip any nodes that are not vulnerability entries.
+			        	//Skip any nodes that are not vulnerability entries, because some nodes are not vulnerability information.
 			        	if(!node.getNodeName().equals("entry"))
 			        		continue;
 					
 					
+			        	//These are holder variables for all the stuff that is going to end up
+			        	//being related to each other.  We set the values of these things as
+			        	//we progress through the subnodes.
 			        	String cveid = null;
 						String msid = null;
 						ArrayList<SoftwareWVersion> vulnerablesoftwares = new ArrayList<SoftwareWVersion>();
@@ -258,6 +261,8 @@ public class GenericCyberEntityTextRelationship
 						{
 							org.w3c.dom.Node node2 = nodelist2.item(j);
 						
+							
+							//Look into each of these if/else if statements to see where we find entities and how we set them from what we find there.
 							if(node2.getNodeName().equals("vuln:cve-id"))
 								cveid = node2.getTextContent();
 							else if(node2.getNodeName().equals("vuln:references"))
